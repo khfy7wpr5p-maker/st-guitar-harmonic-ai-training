@@ -14,7 +14,7 @@ The upstream README at this revision declares:
 - two primary human analysis variants, annotators `A` and `B`;
 - `Joined` files as analysis+score representations for those annotators.
 
-The adapter treats those statements as source provenance, not as permission to invent or repair missing files.
+The adapter treats those statements as source provenance, not as permission to invent or repair missing files. The exact 27 source work IDs are also pinned from the reviewed upstream revision: matching the count alone is insufficient. If one documented work disappears and an unexpected work replaces it, the audit reports both the missing and unexpected identities even though the observed count remains 27.
 
 ## Parsing and provenance rules
 
@@ -30,7 +30,7 @@ The adapter treats those statements as source provenance, not as permission to i
 
 ## Admission blockers
 
-The structural audit remains `HOLD` when declared and observed work/phrase counts disagree, undocumented annotators are present, primary A/B/score coverage is incomplete, or cross-corpus deduplication is unresolved.
+The structural audit remains `HOLD` when declared and observed work/phrase counts disagree, the exact documented work identity set differs, undocumented annotators are present, primary A/B/score coverage is incomplete, or cross-corpus deduplication is unresolved.
 
 Final TRAIN/VALIDATION/CALIBRATION/HOLDOUT assignment is forbidden at this stage. TAVERN is known to overlap downstream/meta corpora such as When-in-Rome and AugmentedNet, so final `canonical_work_id` and `split_group_id` fields remain null and every source-local work candidate remains `QUARANTINE` until cross-corpus work-family evidence is established.
 
