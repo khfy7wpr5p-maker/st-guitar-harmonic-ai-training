@@ -14,6 +14,7 @@ from st_harmonic_training.tavern_phrase_gate import (
 
 STRUCTURE_PATH = Path("evidence/tavern/stage0i_tavern_structure.v1.json")
 LINEAGE_PATH = Path("evidence/tavern/stage0j_tavern_lineage.v1.json")
+PHRASE_GATE_PATH = Path("evidence/tavern/stage0k_tavern_phrase_gate.v1.json")
 
 
 class TavernPhraseGateTests(unittest.TestCase):
@@ -33,6 +34,11 @@ class TavernPhraseGateTests(unittest.TestCase):
         self.assertFalse(gate["gold_assignment_authorized"])
         self.assertFalse(gate["partition_assignment_authorized"])
         self.assertFalse(gate["training_authorized"])
+
+    def test_committed_phrase_gate_evidence_matches_generator(self) -> None:
+        structure, lineage = self.load_inputs()
+        expected = canonical_phrase_gate_json(build_tavern_phrase_gate(structure, lineage))
+        self.assertEqual(PHRASE_GATE_PATH.read_text(encoding="utf-8"), expected)
 
     def test_pair_complete_does_not_become_gold_automatically(self) -> None:
         structure, lineage = self.load_inputs()
