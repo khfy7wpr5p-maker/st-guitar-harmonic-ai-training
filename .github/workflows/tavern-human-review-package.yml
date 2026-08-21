@@ -19,7 +19,8 @@ jobs:
       TAVERN_EXPECTED_SHA256: b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63
       TAVERN_URL: https://github.com/jcdevaney/TAVERN/archive/refs/heads/master.zip
       TAVERN_COMPARISON: /tmp/stage0l_tavern_ab_comparison.v1.json
-      TAVERN_REVIEW_DIR: /tmp/stage0n-tavern-human-review
+      TAVERN_REVIEW_BASE_DIR: /tmp/stage0n-tavern-human-review-base
+      TAVERN_REVIEW_DIR: /tmp/stage0n1-tavern-score-aware-review
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -47,40 +48,66 @@ jobs:
             --archive "$TAVERN_ARCHIVE" \
             --phrase-gate-evidence evidence/tavern/stage0k_tavern_phrase_gate.v1.json \
             --output "$TAVERN_COMPARISON"
-      - name: Build human review package
+      - name: Build base human review package
         run: |
           python -m scripts.build_tavern_review_package \
             --archive "$TAVERN_ARCHIVE" \
             --comparison "$TAVERN_COMPARISON" \
-            --output-dir "$TAVERN_REVIEW_DIR" \
+            --output-dir "$TAVERN_REVIEW_BASE_DIR" \
             --batch-size 25
-      - name: Print bounded package summary
+      - name: Add pinned score phrase references
+        run: |
+          python -m scripts.enrich_tavern_review_with_scores \
+            --source-dir "$TAVERN_REVIEW_BASE_DIR" \
+            --archive "$TAVERN_ARCHIVE" \
+            --output-dir "$TAVERN_REVIEW_DIR"
+      - name: Verify score-aware package shape
         run: |
           python - <<'PY'
           import json
           import os
           from pathlib import Path
 
-          manifest = json.loads((Path(os.environ['TAVERN_REVIEW_DIR']) / 'manifest.json').read_text(encoding='utf-8'))
+          root = Path(os.environ['TAVERN_REVIEW_DIR'])
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          batches = sorted(root.glob('batch-*.html'))
+          score_panels = 0
+          for path in batches:
+              text = path.read_text(encoding='utf-8')
+              score_panels += text.count('<div class="score-panel">')
+              if '<input type="radio"' not in text:
+                  raise SystemExit(f'missing review controls: {path.name}')
+              if '<input type="radio"' in text and ' checked' in text.split('<script', 1)[0]:
+                  raise SystemExit(f'preselected review decision: {path.name}')
+          expected_batches = (manifest['pair_count'] + manifest['batch_size'] - 1) // manifest['batch_size']
+          if len(batches) != expected_batches:
+              raise SystemExit(f'batch count mismatch: {len(batches)} != {expected_batches}')
+          if score_panels != manifest['pair_count']:
+              raise SystemExit(f'score panel count mismatch: {score_panels} != {manifest["pair_count"]}')
+          if manifest['pair_count'] != 937:
+              raise SystemExit('unexpected real pair count')
+          if any(manifest[field] is not False for field in (
+              'gold_assignment_authorized',
+              'partition_assignment_authorized',
+              'training_authorized',
+          )):
+              raise SystemExit('review package must remain non-authoritative')
           print(json.dumps({
-              'schema_version': manifest['schema_version'],
+              'schema_version': 'st-tavern-score-aware-review-v1',
               'pair_count': manifest['pair_count'],
-              'relation_counts': manifest['relation_counts'],
-              'batch_size': manifest['batch_size'],
-              'batch_count': manifest['batch_count'],
-              'raw_annotation_text_in_ephemeral_package': manifest['raw_annotation_text_in_ephemeral_package'],
-              'raw_annotation_text_committed': manifest['raw_annotation_text_committed'],
-              'decisions_preselected': manifest['decisions_preselected'],
-              'gold_assignment_authorized': manifest['gold_assignment_authorized'],
-              'partition_assignment_authorized': manifest['partition_assignment_authorized'],
-              'training_authorized': manifest['training_authorized'],
+              'batch_count': len(batches),
+              'score_panel_count': score_panels,
+              'decisions_preselected': False,
+              'gold_assignment_authorized': False,
+              'partition_assignment_authorized': False,
+              'training_authorized': False,
           }, sort_keys=True))
           PY
-      - name: Upload short-lived human review package
+      - name: Upload short-lived score-aware human review package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: stage0n-tavern-human-review
-          path: /tmp/stage0n-tavern-human-review
+          name: stage0n1-tavern-score-aware-human-review
+          path: /tmp/stage0n1-tavern-score-aware-review
           if-no-files-found: error
           retention-days: 1
           compression-level: 9
