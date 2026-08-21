@@ -6,7 +6,7 @@ from typing import Any
 
 from .safe_ingest import load_bounded_json
 from .tavern_lineage import LINEAGE_SCHEMA
-from .tavern_structure import PINNED_TAVERN_REVISION, STRUCTURE_SCHEMA
+from .tavern_structure import DOCUMENTED_WORK_IDS, PINNED_TAVERN_REVISION, STRUCTURE_SCHEMA
 
 PHRASE_GATE_SCHEMA = "st-tavern-phrase-gate-v1"
 
@@ -33,6 +33,8 @@ def _required_count(mapping: dict[str, Any], key: str) -> int:
 def _validate_inputs(structure: object, lineage: object) -> tuple[dict[str, Any], dict[str, Any]]:
     if not isinstance(structure, dict) or structure.get("schema_version") != STRUCTURE_SCHEMA:
         raise TavernPhraseGateError("unsupported TAVERN structure evidence")
+    if structure.get("source_corpus") != "TAVERN":
+        raise TavernPhraseGateError("structure evidence source corpus mismatch")
     if structure.get("immutable_revision") != PINNED_TAVERN_REVISION:
         raise TavernPhraseGateError("TAVERN structure revision mismatch")
     if structure.get("training_authorized") is not False:
@@ -40,6 +42,8 @@ def _validate_inputs(structure: object, lineage: object) -> tuple[dict[str, Any]
 
     if not isinstance(lineage, dict) or lineage.get("schema_version") != LINEAGE_SCHEMA:
         raise TavernPhraseGateError("unsupported TAVERN lineage evidence")
+    if lineage.get("source_corpus") != "TAVERN":
+        raise TavernPhraseGateError("lineage evidence source corpus mismatch")
     if lineage.get("source_revision") != PINNED_TAVERN_REVISION:
         raise TavernPhraseGateError("TAVERN lineage revision mismatch")
     if lineage.get("partition_assignment_authorized") is not False:
@@ -48,6 +52,21 @@ def _validate_inputs(structure: object, lineage: object) -> tuple[dict[str, Any]
         raise TavernPhraseGateError("lineage evidence must not authorize training")
     if lineage.get("work_family_count") != 27:
         raise TavernPhraseGateError("lineage evidence must contain exactly 27 work families")
+    work_families = lineage.get("work_families")
+    if not isinstance(work_families, list) or not all(isinstance(item, dict) for item in work_families):
+        raise TavernPhraseGateError("lineage work_families must be an array of objects")
+    source_ids = [item.get("source_work_id") for item in work_families]
+    if not all(isinstance(value, str) and value for value in source_ids):
+        raise TavernPhraseGateError("lineage work family missing source_work_id")
+    if len(source_ids) != len(set(source_ids)):
+        raise TavernPhraseGateError("duplicate lineage source_work_id")
+    observed_ids = frozenset(source_ids)
+    if observed_ids != DOCUMENTED_WORK_IDS:
+        missing = sorted(DOCUMENTED_WORK_IDS - observed_ids)
+        unexpected = sorted(observed_ids - DOCUMENTED_WORK_IDS)
+        raise TavernPhraseGateError(
+            f"lineage identity mismatch; missing={missing}, unexpected={unexpected}"
+        )
 
     counts = structure.get("phrase_status_counts")
     if not isinstance(counts, dict):
