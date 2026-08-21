@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -10,11 +11,13 @@ import zipfile
 from .safe_ingest import inspect_zip
 
 PINNED_TAVERN_REVISION = "7cc65dc5365603a92376af50ac71491bea7a16ae"
+PINNED_TAVERN_RAW_SHA256 = "b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63"
 DECLARED_WORK_COUNT = 27
 DECLARED_PHRASE_COUNT = 1060
 DOCUMENTED_ANNOTATORS = {"A", "B"}
 STRUCTURE_SCHEMA = "st-tavern-structure-v1"
 
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 SCORE_RE = re.compile(r"_V?(\d{2})_(\d{2})_score\.krn$")
 ANALYSIS_RE = re.compile(r"_V?(\d{2})_(\d{2})_encoder([A-Za-z])\.krn$")
 JOINED_RE = re.compile(r"_V?(\d{2})_(\d{2})[a-z]*_([A-Za-z])\.krn$")
@@ -35,6 +38,14 @@ class PhraseArtifacts:
 
     def joined_map(self) -> dict[str, str]:
         return dict(self.joined)
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _archive_root(infos: tuple[zipfile.ZipInfo, ...]) -> str:
@@ -98,6 +109,7 @@ def build_tavern_structure_audit(
     archive_path: str | Path,
     *,
     immutable_revision: str,
+    expected_raw_archive_sha256: str = PINNED_TAVERN_RAW_SHA256,
 ) -> dict[str, object]:
     revision = immutable_revision.strip()
     if revision != PINNED_TAVERN_REVISION:
@@ -106,7 +118,18 @@ def build_tavern_structure_audit(
             f"{PINNED_TAVERN_REVISION}; got {revision or '<empty>'}"
         )
 
+    expected_hash = expected_raw_archive_sha256.strip().lower()
+    if not SHA256_RE.fullmatch(expected_hash):
+        raise TavernStructureError("expected raw archive SHA-256 must be lowercase hex")
+
     archive = Path(archive_path)
+    observed_hash = _sha256_file(archive)
+    if observed_hash != expected_hash:
+        raise TavernStructureError(
+            "TAVERN raw archive SHA-256 mismatch: "
+            f"expected {expected_hash}, observed {observed_hash}"
+        )
+
     infos = inspect_zip(archive)
     root = _archive_root(infos)
     files = [info for info in infos if not info.is_dir()]
