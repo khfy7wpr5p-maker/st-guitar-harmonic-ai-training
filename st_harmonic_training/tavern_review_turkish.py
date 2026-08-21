@@ -168,11 +168,19 @@ def translate_batch_html_to_turkish(text: str) -> str:
         raise TavernTurkishReviewError("machine decision codes changed during localization")
     if PRESELECTED_RE.search(translated):
         raise TavernTurkishReviewError("localization introduced a preselected decision")
-    if "Evidence relation:" in translated or "Annotator A" in translated or "Human decision" in translated:
+
+    visible_only = PRE_RE.sub("", translated)
+    if (
+        "Evidence relation:" in visible_only
+        or "Annotator A" in visible_only
+        or "Human decision" in visible_only
+    ):
         raise TavernTurkishReviewError("English review UI marker remained after localization")
     for code in DECISION_LABELS_TR:
-        if f"> {code}</label>" in translated:
-            raise TavernTurkishReviewError(f"visible decision code remained after localization: {code}")
+        if f"> {code}</label>" in visible_only:
+            raise TavernTurkishReviewError(
+                f"visible decision code remained after localization: {code}"
+            )
     return translated
 
 
