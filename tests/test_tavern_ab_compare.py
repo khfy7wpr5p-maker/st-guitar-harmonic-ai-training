@@ -153,7 +153,7 @@ class TavernABComparisonTests(unittest.TestCase):
             self.write_zip(archive, include_c=True)
             evidence = self.compare(archive)
         self.assertEqual(evidence["pair_count"], 1)
-        self.assertNotIn("C", canonical_ab_comparison_json(evidence))
+        self.assertNotIn("Encoder_C", canonical_ab_comparison_json(evidence))
 
     def test_premature_gold_authorization_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
