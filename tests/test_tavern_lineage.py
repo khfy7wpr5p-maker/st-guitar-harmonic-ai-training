@@ -15,6 +15,7 @@ from st_harmonic_training.tavern_structure import DOCUMENTED_WORK_IDS
 
 
 STRUCTURE_PATH = Path("evidence/tavern/stage0i_tavern_structure.v1.json")
+LINEAGE_PATH = Path("evidence/tavern/stage0j_tavern_lineage.v1.json")
 
 
 class TavernLineageTests(unittest.TestCase):
@@ -32,6 +33,12 @@ class TavernLineageTests(unittest.TestCase):
             [item["source_work_id"] for item in evidence["work_families"]],
             sorted(DOCUMENTED_WORK_IDS),
         )
+
+    def test_committed_lineage_evidence_matches_generator(self) -> None:
+        expected = canonical_lineage_json(
+            build_tavern_lineage_evidence(self.load_structure())
+        )
+        self.assertEqual(LINEAGE_PATH.read_text(encoding="utf-8"), expected)
 
     def test_b063_lineage_aliases_are_explicit(self) -> None:
         evidence = build_tavern_lineage_evidence(self.load_structure())
