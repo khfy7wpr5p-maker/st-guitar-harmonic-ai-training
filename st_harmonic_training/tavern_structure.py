@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import dataclass
 import json
 from pathlib import Path, PurePosixPath
 import re
-import zipfile
 
 from .safe_ingest import inspect_zip
 
@@ -30,24 +28,31 @@ class TavernStructureError(ValueError):
     pass
 
 
-@dataclass(frozen=True)
-class PhrasePresence:
-    score: bool = False
-    annotators: frozenset[str] = frozenset()
-
-
-@dataclass(frozen=True)
 class TavernStructureReport:
-    work_counts: dict[str, int]
-    observed_unique_phrase_keys: int
-    complete_score_a_b: int
-    score_a_without_b: int
-    score_b_without_a: int
-    score_without_documented_analysis: int
-    documented_analysis_without_score: int
-    undocumented_annotator_file_counts: dict[str, int]
-    undocumented_only_phrase_keys: int
-    blockers: tuple[str, ...]
+    def __init__(
+        self,
+        *,
+        work_counts: dict[str, int],
+        observed_unique_phrase_keys: int,
+        complete_score_a_b: int,
+        score_a_without_b: int,
+        score_b_without_a: int,
+        score_without_documented_analysis: int,
+        documented_analysis_without_score: int,
+        undocumented_annotator_file_counts: dict[str, int],
+        undocumented_only_phrase_keys: int,
+        blockers: tuple[str, ...],
+    ) -> None:
+        self.work_counts = work_counts
+        self.observed_unique_phrase_keys = observed_unique_phrase_keys
+        self.complete_score_a_b = complete_score_a_b
+        self.score_a_without_b = score_a_without_b
+        self.score_b_without_a = score_b_without_a
+        self.score_without_documented_analysis = score_without_documented_analysis
+        self.documented_analysis_without_score = documented_analysis_without_score
+        self.undocumented_annotator_file_counts = undocumented_annotator_file_counts
+        self.undocumented_only_phrase_keys = undocumented_only_phrase_keys
+        self.blockers = blockers
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -123,7 +128,11 @@ def analyze_logical_paths(logical_paths: list[str]) -> TavernStructureReport:
 
     for logical in sorted(set(logical_paths)):
         parts = PurePosixPath(logical).parts
-        if len(parts) >= 2 and parts[0] in DOCUMENTED_WORKS and parts[1] in DOCUMENTED_WORKS[parts[0]]:
+        if (
+            len(parts) >= 3
+            and parts[0] in DOCUMENTED_WORKS
+            and parts[2] in {"Krn", "Encodings", "Joined"}
+        ):
             works_seen[parts[0]].add(parts[1])
         parsed = _phrase_key(logical)
         if parsed is None:
