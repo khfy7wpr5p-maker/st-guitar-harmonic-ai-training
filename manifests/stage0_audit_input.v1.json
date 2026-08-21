@@ -12,6 +12,27 @@
     "ChoCo",
     "McGill Billboard"
   ],
-  "source_manifests": [],
+  "source_manifests": [
+    {
+      "source_corpus": "TAVERN",
+      "source_url": "https://github.com/jcdevaney/TAVERN",
+      "immutable_revision": "7cc65dc5365603a92376af50ac71491bea7a16ae",
+      "release_tag_commit_doi": "commit:7cc65dc5365603a92376af50ac71491bea7a16ae",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "CC-BY-SA-4.0",
+      "license_scope": "Repository corpus contents under upstream LICENSE at immutable revision",
+      "source_provenance": "Original TAVERN repository; Theme And Variation Encodings with Roman Numerals",
+      "annotation_provenance": "Human Roman-numeral and functional analyses with annotator A/B variants where available; teacher-gold eligibility remains subject to work-level review",
+      "known_issues": [
+        "Some works have incomplete or annotator-specific analysis/joined-file availability",
+        "TAVERN is incorporated by downstream/meta corpora including When-in-Rome and AugmentedNet; cross-corpus copies must not be treated as independent works",
+        "Content-level SHA-256 evidence and canonical work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Integrity hashes and cross-corpus work-family/dedup evidence are incomplete; no training admission"
+    }
+  ],
   "samples": []
 }
