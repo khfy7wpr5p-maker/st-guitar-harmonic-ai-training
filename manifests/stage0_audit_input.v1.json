@@ -32,6 +32,90 @@
       ],
       "acquisition_status": "QUARANTINE",
       "quarantine_reason": "Integrity hashes and cross-corpus work-family/dedup evidence are incomplete; no training admission"
+    },
+    {
+      "source_corpus": "DCML corpora",
+      "source_url": "https://github.com/DCMLab/dcml_corpora",
+      "immutable_revision": "c38061d9fc7e7a75c9851eb4f17d6a2b27055fd5",
+      "release_tag_commit_doi": "commit:c38061d9fc7e7a75c9851eb4f17d6a2b27055fd5",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "Meta-repository composed of independently maintained subcorpora; per-subcorpus licence verification is required before admission",
+      "source_provenance": "DCML meta-repository with annotated score corpora pinned through repository/submodule revisions",
+      "annotation_provenance": "DCML harmonic labels are entered into scores by professional music theorists using the DCML harmonic annotation standard",
+      "known_issues": [
+        "Top-level repository does not establish one verified umbrella licence for every subcorpus",
+        "Subcorpora may also appear in downstream/meta corpora such as When-in-Rome, AugmentedNet and Dilemmadata",
+        "Archive/content SHA-256 values and work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Per-subcorpus licence scope, integrity hashes and cross-corpus work-family evidence remain incomplete"
+    },
+    {
+      "source_corpus": "When-in-Rome",
+      "source_url": "https://github.com/MarkGotham/When-in-Rome",
+      "immutable_revision": "1c61fe41b8c2910296d7d2bcbf6476c7c1f2fe35",
+      "release_tag_commit_doi": "commit:1c61fe41b8c2910296d7d2bcbf6476c7c1f2fe35",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "Top-level README advertises CC-BY-SA-4.0 for the project, while included or remote scores can carry source-specific licences that must be checked independently",
+      "source_provenance": "Meta-corpus combining new analyses with converted analyses originating from DCML, TAVERN and other upstream corpora",
+      "annotation_provenance": "analysis.txt denotes human analysis; analysis_automatic.rntxt is automatic AugmentedNet output and is not teacher-gold; alternative human/source analyses may coexist per work",
+      "known_issues": [
+        "Contains converted/copy-equivalent material from TAVERN, DCML and other corpora, so rows cannot be treated as independent works",
+        "Automatic AugmentedNet analyses coexist beside human analyses and must remain non-gold unless human-reviewed",
+        "Score licensing may be external or source-specific and is not safely represented by a single project-level licence",
+        "Content hashes and canonical work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Mixed provenance, score-licence scope, automatic/human annotation separation, integrity hashes and cross-corpus dedup require completion"
+    },
+    {
+      "source_corpus": "Dilemmadata",
+      "source_url": "https://github.com/johentsch/dilemmadata",
+      "immutable_revision": "5dde764fe75138069752a7de24ab89bedfd291ae",
+      "release_tag_commit_doi": "dataset-version:v1.0;commit:5dde764fe75138069752a7de24ab89bedfd291ae",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "CC-BY-NC-SA-4.0",
+      "license_scope": "Dataset metadata declares CC-BY-NC-SA-4.0 at the immutable revision; upstream/submodule attribution and licence inheritance still require preservation",
+      "source_provenance": "Processed and aligned dataset derived from AugmentedNet and the DCML Distant Listening Corpus, with pitch-array representations and source submodules",
+      "annotation_provenance": "Carries harmonic, key, phrase, cadence and related annotations inherited or processed from AugmentedNet and Distant Listening Corpus sources",
+      "known_issues": [
+        "This is a derived dataset and must not be counted independently from its AugmentedNet/DCML source works",
+        "Repository submodules point to AugmentedNet and Distant Listening Corpus lineages that require canonical work-family deduplication",
+        "Existing upstream train/test/validation organization cannot override ST leakage-safe split policy",
+        "Content hashes and transformation-level equivalence evidence are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Derived-data lineage, source overlap, integrity hashes and ST work-family split evidence remain incomplete"
+    },
+    {
+      "source_corpus": "AugmentedNet",
+      "source_url": "https://github.com/napulen/AugmentedNet",
+      "immutable_revision": "46d3475651346fd9053db29bc2bfb7943a869b74",
+      "release_tag_commit_doi": "commit:46d3475651346fd9053db29bc2bfb7943a869b74",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "Repository LICENSE is MIT for software; accompanying real training data is assembled from third-party datasets/submodules and requires source-specific dataset licence resolution",
+      "source_provenance": "Model/training repository whose real data is collected from third-party corpora including TAVERN, DCML ABC, When-in-Rome, music21 and additional harmonic datasets; synthetic examples are also generated",
+      "annotation_provenance": "Mixed third-party human harmonic annotations plus generated synthetic/texturized examples; pretrained model predictions are not teacher-gold",
+      "known_issues": [
+        "MIT software licence must not be misapplied to third-party corpus contents",
+        "Raw-data submodules explicitly overlap TAVERN, When-in-Rome and DCML ABC",
+        "Synthetic/texturized examples must be TRAIN-only and grouped with their source derivation families",
+        "Upstream split assignments cannot override ST work-family leakage-safe split policy",
+        "Content hashes and source-specific licence evidence are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Dataset licence scope, third-party lineage, synthetic-derivation grouping, integrity hashes and cross-corpus dedup remain incomplete"
     }
   ],
   "samples": []
