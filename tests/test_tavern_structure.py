@@ -9,6 +9,7 @@ import zipfile
 
 from st_harmonic_training.safe_ingest import IngestSecurityError
 from st_harmonic_training.tavern_structure import (
+    DOCUMENTED_WORK_IDS,
     PINNED_TAVERN_RAW_SHA256,
     PINNED_TAVERN_REVISION,
     TavernStructureError,
@@ -151,6 +152,27 @@ class TavernStructureTests(unittest.TestCase):
             PINNED_TAVERN_RAW_SHA256,
             evidence["manifest_hash_fields"]["raw_archive_sha256"],
         )
+
+    def test_exact_work_identity_rejects_count_preserving_substitution(self) -> None:
+        members: dict[str, bytes] = {
+            "README.md": b"# TAVERN\n",
+            "LICENSE": b"license\n",
+        }
+        substituted = sorted(DOCUMENTED_WORK_IDS - {"Beethoven/B063"})
+        substituted.append("Beethoven/Unexpected")
+        for work_id in substituted:
+            members[f"{work_id}/Krn/support.krn"] = b"support\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "tavern.zip"
+            self.write_zip(archive, members=members)
+            audit = self.build(archive)
+        self.assertEqual(audit["observed_counts"]["works"], 27)
+        self.assertNotIn(
+            "DECLARED_OBSERVED_WORK_COUNT_MISMATCH:27:27",
+            audit["blockers"],
+        )
+        self.assertIn("DOCUMENTED_WORKS_MISSING:Beethoven/B063", audit["blockers"])
+        self.assertIn("UNEXPECTED_WORKS:Beethoven/Unexpected", audit["blockers"])
 
     def test_root_name_and_zip_order_do_not_change_structure_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
