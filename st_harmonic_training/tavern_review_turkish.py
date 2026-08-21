@@ -32,7 +32,7 @@ RELATION_RE = re.compile(
 )
 RADIO_RE = re.compile(
     r'<label><input type="radio" name="(decision-\d+)" value="'
-    r'(CONFIRM_EQUIVALENT|SELECT_A|SELECT_B|PRESERVE_VARIANTS|AMBIGUOUS|ABSTAIN)"
+    r'(CONFIRM_EQUIVALENT|SELECT_A|SELECT_B|PRESERVE_VARIANTS|AMBIGUOUS|ABSTAIN)"'
     r'> (CONFIRM_EQUIVALENT|SELECT_A|SELECT_B|PRESERVE_VARIANTS|AMBIGUOUS|ABSTAIN)</label>'
 )
 PRESELECTED_RE = re.compile(r'<input\s+[^>]*type="radio"[^>]*\schecked(?:\s|=|>)', re.IGNORECASE)
@@ -49,15 +49,6 @@ class TavernTurkishReviewError(ValueError):
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
-
-
-def _require_once(text: str, old: str, *, context: str) -> str:
-    count = text.count(old)
-    if count != 1:
-        raise TavernTurkishReviewError(
-            f"expected exactly one {context} marker; observed {count}"
-        )
-    return text.replace(old, "", 0)
 
 
 def _translate_score_svg(match: re.Match[str]) -> str:
@@ -179,6 +170,9 @@ def translate_batch_html_to_turkish(text: str) -> str:
         raise TavernTurkishReviewError("localization introduced a preselected decision")
     if "Evidence relation:" in translated or "Annotator A" in translated or "Human decision" in translated:
         raise TavernTurkishReviewError("English review UI marker remained after localization")
+    for code in DECISION_LABELS_TR:
+        if f"> {code}</label>" in translated:
+            raise TavernTurkishReviewError(f"visible decision code remained after localization: {code}")
     return translated
 
 
