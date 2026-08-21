@@ -15,6 +15,35 @@ PINNED_TAVERN_RAW_SHA256 = "b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d
 DECLARED_WORK_COUNT = 27
 DECLARED_PHRASE_COUNT = 1060
 DOCUMENTED_ANNOTATORS = {"A", "B"}
+DOCUMENTED_WORK_IDS = frozenset({
+    "Beethoven/B063",
+    "Beethoven/B064",
+    "Beethoven/B065",
+    "Beethoven/B066",
+    "Beethoven/B068",
+    "Beethoven/B069",
+    "Beethoven/B070",
+    "Beethoven/B071",
+    "Beethoven/B072",
+    "Beethoven/B073",
+    "Beethoven/B075",
+    "Beethoven/B076",
+    "Beethoven/B077",
+    "Beethoven/B078",
+    "Beethoven/B080",
+    "Beethoven/Opus34",
+    "Beethoven/Opus76",
+    "Mozart/K025",
+    "Mozart/K179",
+    "Mozart/K265",
+    "Mozart/K353",
+    "Mozart/K354",
+    "Mozart/K398",
+    "Mozart/K455",
+    "Mozart/K501",
+    "Mozart/K573",
+    "Mozart/K613",
+})
 STRUCTURE_SCHEMA = "st-tavern-structure-v1"
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -246,6 +275,12 @@ def build_tavern_structure_audit(
         blockers.append(
             f"DECLARED_OBSERVED_WORK_COUNT_MISMATCH:{DECLARED_WORK_COUNT}:{len(works_seen)}"
         )
+    missing_work_ids = sorted(DOCUMENTED_WORK_IDS - works_seen)
+    unexpected_work_ids = sorted(works_seen - DOCUMENTED_WORK_IDS)
+    if missing_work_ids:
+        blockers.append("DOCUMENTED_WORKS_MISSING:" + ",".join(missing_work_ids))
+    if unexpected_work_ids:
+        blockers.append("UNEXPECTED_WORKS:" + ",".join(unexpected_work_ids))
     if len(phrase_keys) != DECLARED_PHRASE_COUNT:
         blockers.append(
             f"DECLARED_OBSERVED_PHRASE_COUNT_MISMATCH:"
@@ -299,6 +334,7 @@ def build_tavern_structure_audit(
             "works": DECLARED_WORK_COUNT,
             "phrases": DECLARED_PHRASE_COUNT,
         },
+        "documented_work_ids": sorted(DOCUMENTED_WORK_IDS),
         "observed_counts": {
             "works": len(works_seen),
             "phrase_keys": len(phrase_keys),
