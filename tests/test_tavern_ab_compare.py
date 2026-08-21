@@ -147,6 +147,19 @@ class TavernABComparisonTests(unittest.TestCase):
                     expected_raw_archive_sha256="0" * 64,
                 )
 
+    def test_symlink_archive_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "fixture.zip"
+            digest = self.write_zip(target)
+            link = Path(tmp) / "linked.zip"
+            link.symlink_to(target)
+            with self.assertRaises(TavernABComparisonError):
+                build_tavern_ab_comparison(
+                    link,
+                    self.phrase_gate(),
+                    expected_raw_archive_sha256=digest,
+                )
+
     def test_undocumented_encoder_c_is_never_compared(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             archive = Path(tmp) / "fixture.zip"
