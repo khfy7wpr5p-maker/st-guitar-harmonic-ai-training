@@ -4,7 +4,7 @@ This gate converts the already integrity-pinned TAVERN archive into a determinis
 
 ## Pinned source policy
 
-The adapter is valid only for TAVERN revision `7cc65dc5365603a92376af50ac71491bea7a16ae`. A different revision fails closed until its structure and provenance are reviewed again.
+The adapter is valid only for TAVERN revision `7cc65dc5365603a92376af50ac71491bea7a16ae` **and** the previously admitted raw archive SHA-256 `b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63`. A different revision or raw archive hash fails closed until integrity and structure are reviewed again. The pinned hash is regression-checked against the committed Stage 0-H integrity evidence.
 
 The upstream README at this revision declares:
 
@@ -18,7 +18,8 @@ The adapter treats those statements as source provenance, not as permission to i
 
 ## Parsing and provenance rules
 
-- The existing fail-closed ZIP security gate runs before structural parsing.
+- The raw archive SHA-256 must match the Stage 0-H evidence before structural parsing proceeds.
+- The existing fail-closed ZIP security gate runs before any member is trusted as corpus structure.
 - Work identity at this stage is source-local (`TAVERN::<composer>/<work>`). It is only a **work-family candidate**, not a final cross-corpus `canonical_work_id`.
 - Phrase identity is derived from the documented variation/phrase positions in phrase-level filenames. Known `_V00_01_` score naming variants normalize to the same phrase key as `_00_01_` analysis filenames.
 - Whole-work, fixed, original, interpreter or other `.krn` files under `Krn/` that do not match the phrase-score naming contract are support artifacts, not extra training phrases.
