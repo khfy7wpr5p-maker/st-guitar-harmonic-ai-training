@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://st.local/schemas/gold_record.v1.schema.json",
+  "title": "ST Harmonic Training Gold Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_id", "gold_tier", "annotation_kind", "adjudication_outcome", "raw_source_label", "annotator_count"],
+  "properties": {
+    "record_id": {"type": "string", "minLength": 1},
+    "gold_tier": {"enum": ["GOLD_CONSENSUS", "GOLD_EXPERT", "GOLD_VARIANT", "SILVER_REVIEWED", "SILVER_AUTO", "UNLABELED_CLEAN", "QUARANTINE"]},
+    "annotation_kind": {"enum": ["HUMAN_CONSENSUS", "HUMAN_EXPERT", "HUMAN_VARIANT", "HUMAN_REVIEWED", "AUTO", "UNLABELED"]},
+    "adjudication_outcome": {"enum": ["RESOLVED", "AMBIGUOUS", "ABSTAIN"]},
+    "raw_source_label": {"type": ["string", "null"]},
+    "annotator_count": {"type": "integer", "minimum": 0},
+    "notes": {"type": ["string", "null"]}
+  }
+}

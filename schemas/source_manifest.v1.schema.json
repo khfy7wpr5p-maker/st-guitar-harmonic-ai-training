@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://st.local/schemas/source_manifest.v1.schema.json",
+  "title": "ST Harmonic Training Source Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_corpus", "source_url", "immutable_revision", "release_tag_commit_doi",
+    "raw_archive_sha256", "score_sha256", "analysis_sha256", "license_id",
+    "license_scope", "source_provenance", "annotation_provenance", "known_issues",
+    "acquisition_status", "quarantine_reason"
+  ],
+  "properties": {
+    "source_corpus": {"type": "string", "minLength": 1},
+    "source_url": {"type": "string", "minLength": 1},
+    "immutable_revision": {"type": "string", "minLength": 1},
+    "release_tag_commit_doi": {"type": "string", "minLength": 1},
+    "raw_archive_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "score_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "analysis_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "license_id": {"type": "string", "minLength": 1},
+    "license_scope": {"type": "string", "minLength": 1},
+    "source_provenance": {"type": "string", "minLength": 1},
+    "annotation_provenance": {"type": "string", "minLength": 1},
+    "known_issues": {"type": "array", "items": {"type": "string"}},
+    "acquisition_status": {"enum": ["READY", "QUARANTINE"]},
+    "quarantine_reason": {"type": ["string", "null"]}
+  }
+}
