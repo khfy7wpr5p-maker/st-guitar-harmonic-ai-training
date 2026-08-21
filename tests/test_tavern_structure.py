@@ -58,6 +58,12 @@ class TavernStructureTests(unittest.TestCase):
             any(item.startswith("DOCUMENTED_PHRASE_COUNT_MISMATCH:1060!=") for item in report.blockers)
         )
 
+    def test_unexpected_work_directory_is_a_blocker(self) -> None:
+        report = analyze_logical_paths([
+            "Beethoven/Unexpected/Krn/X_00_01_score.krn",
+        ])
+        self.assertIn("UNEXPECTED_WORKS:Beethoven:Unexpected", report.blockers)
+
     def test_work_family_manifest_has_exact_documented_27_works(self) -> None:
         revision = "7cc65dc5365603a92376af50ac71491bea7a16ae"
         manifest = build_work_family_manifest(immutable_revision=revision)
