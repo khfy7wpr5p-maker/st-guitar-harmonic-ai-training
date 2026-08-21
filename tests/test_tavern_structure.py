@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +9,7 @@ import zipfile
 
 from st_harmonic_training.safe_ingest import IngestSecurityError
 from st_harmonic_training.tavern_structure import (
+    PINNED_TAVERN_RAW_SHA256,
     PINNED_TAVERN_REVISION,
     TavernStructureError,
     build_tavern_structure_audit,
@@ -42,9 +45,11 @@ class TavernStructureTests(unittest.TestCase):
                 zf.writestr(f"{root}/{name}", data)
 
     def build(self, path: Path) -> dict[str, object]:
+        synthetic_hash = hashlib.sha256(path.read_bytes()).hexdigest()
         return build_tavern_structure_audit(
             path,
             immutable_revision=PINNED_TAVERN_REVISION,
+            expected_raw_archive_sha256=synthetic_hash,
         )
 
     def test_documented_ab_pair_is_complete(self) -> None:
@@ -125,6 +130,27 @@ class TavernStructureTests(unittest.TestCase):
                     archive,
                     immutable_revision="0" * 40,
                 )
+
+    def test_wrong_raw_archive_hash_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "tavern.zip"
+            self.write_zip(archive)
+            with self.assertRaises(TavernStructureError):
+                build_tavern_structure_audit(
+                    archive,
+                    immutable_revision=PINNED_TAVERN_REVISION,
+                )
+
+    def test_pinned_raw_hash_matches_committed_integrity_evidence(self) -> None:
+        evidence = json.loads(
+            Path("evidence/tavern/stage0h_tavern_evidence.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            PINNED_TAVERN_RAW_SHA256,
+            evidence["manifest_hash_fields"]["raw_archive_sha256"],
+        )
 
     def test_root_name_and_zip_order_do_not_change_structure_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
