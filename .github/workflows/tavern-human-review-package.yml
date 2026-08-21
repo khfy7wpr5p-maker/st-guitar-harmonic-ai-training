@@ -20,7 +20,8 @@ jobs:
       TAVERN_URL: https://github.com/jcdevaney/TAVERN/archive/refs/heads/master.zip
       TAVERN_COMPARISON: /tmp/stage0l_tavern_ab_comparison.v1.json
       TAVERN_REVIEW_BASE_DIR: /tmp/stage0n-tavern-human-review-base
-      TAVERN_REVIEW_DIR: /tmp/stage0n1-tavern-score-aware-review
+      TAVERN_REVIEW_SCORE_DIR: /tmp/stage0n1-tavern-score-aware-review
+      TAVERN_REVIEW_DIR: /tmp/stage0n2-tavern-score-aware-review-tr
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -60,54 +61,76 @@ jobs:
           python -m scripts.enrich_tavern_review_with_scores \
             --source-dir "$TAVERN_REVIEW_BASE_DIR" \
             --archive "$TAVERN_ARCHIVE" \
+            --output-dir "$TAVERN_REVIEW_SCORE_DIR"
+      - name: Localize review UI and decisions to Turkish
+        run: |
+          python -m scripts.localize_tavern_review_tr \
+            --source-dir "$TAVERN_REVIEW_SCORE_DIR" \
             --output-dir "$TAVERN_REVIEW_DIR"
-      - name: Verify score-aware package shape
+      - name: Verify final Turkish package integrity
         run: |
           python - <<'PY'
+          import hashlib
           import json
           import os
           from pathlib import Path
 
           root = Path(os.environ['TAVERN_REVIEW_DIR'])
           manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
-          batches = sorted(root.glob('batch-*.html'))
-          score_panels = 0
-          for path in batches:
-              text = path.read_text(encoding='utf-8')
-              score_panels += text.count('<div class="score-panel">')
-              if '<input type="radio"' not in text:
-                  raise SystemExit(f'missing review controls: {path.name}')
-              if '<input type="radio"' in text and ' checked' in text.split('<script', 1)[0]:
-                  raise SystemExit(f'preselected review decision: {path.name}')
-          expected_batches = (manifest['pair_count'] + manifest['batch_size'] - 1) // manifest['batch_size']
-          if len(batches) != expected_batches:
-              raise SystemExit(f'batch count mismatch: {len(batches)} != {expected_batches}')
-          if score_panels != manifest['pair_count']:
-              raise SystemExit(f'score panel count mismatch: {score_panels} != {manifest["pair_count"]}')
+          if manifest['schema_version'] != 'st-tavern-score-aware-review-tr-v1':
+              raise SystemExit('unexpected Turkish review schema')
+          if manifest['review_ui_language'] != 'tr':
+              raise SystemExit('review UI is not Turkish')
           if manifest['pair_count'] != 937:
               raise SystemExit('unexpected real pair count')
+          if manifest['batch_count'] != 38:
+              raise SystemExit('unexpected batch count')
+          if not manifest['decision_codes_preserved']:
+              raise SystemExit('machine decision codes were not preserved')
+          if manifest['decisions_preselected']:
+              raise SystemExit('review package contains preselected decisions')
           if any(manifest[field] is not False for field in (
               'gold_assignment_authorized',
               'partition_assignment_authorized',
               'training_authorized',
           )):
               raise SystemExit('review package must remain non-authoritative')
+
+          total = 0
+          for batch in manifest['batches']:
+              path = root / batch['filename']
+              actual = hashlib.sha256(path.read_bytes()).hexdigest()
+              if actual != batch['sha256']:
+                  raise SystemExit(f'batch hash mismatch: {path.name}')
+              text = path.read_text(encoding='utf-8')
+              total += batch['record_count']
+              if '<html lang="tr">' not in text:
+                  raise SystemExit(f'non-Turkish batch language: {path.name}')
+              if 'A analizi daha doğru' not in text and 'İki analiz eşdeğer' not in text:
+                  raise SystemExit(f'Turkish decision labels missing: {path.name}')
+              if '<input type="radio"' in text and ' checked' in text.split('<script', 1)[0]:
+                  raise SystemExit(f'preselected review decision: {path.name}')
+          if total != 937:
+              raise SystemExit(f'localized record total mismatch: {total}')
+          actual_index = hashlib.sha256((root / 'index.html').read_bytes()).hexdigest()
+          if actual_index != manifest['index_sha256']:
+              raise SystemExit('index hash mismatch')
           print(json.dumps({
-              'schema_version': 'st-tavern-score-aware-review-v1',
+              'schema_version': manifest['schema_version'],
+              'review_ui_language': manifest['review_ui_language'],
               'pair_count': manifest['pair_count'],
-              'batch_count': len(batches),
-              'score_panel_count': score_panels,
-              'decisions_preselected': False,
-              'gold_assignment_authorized': False,
-              'partition_assignment_authorized': False,
-              'training_authorized': False,
-          }, sort_keys=True))
+              'batch_count': manifest['batch_count'],
+              'decision_codes_preserved': manifest['decision_codes_preserved'],
+              'decisions_preselected': manifest['decisions_preselected'],
+              'final_hashes_verified': True,
+              'training_authorized': manifest['training_authorized'],
+          }, sort_keys=True, ensure_ascii=False))
           PY
-      - name: Upload short-lived score-aware human review package
+      - name: Upload short-lived Turkish score-aware review package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: stage0n1-tavern-score-aware-human-review
-          path: /tmp/stage0n1-tavern-score-aware-review
+          name: stage0n2-tavern-score-aware-human-review-tr
+          path: /tmp/stage0n2-tavern-score-aware-review-tr
           if-no-files-found: error
           retention-days: 1
           compression-level: 9
