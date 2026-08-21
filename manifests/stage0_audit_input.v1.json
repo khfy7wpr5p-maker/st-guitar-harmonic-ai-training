@@ -116,6 +116,129 @@
       ],
       "acquisition_status": "QUARANTINE",
       "quarantine_reason": "Dataset licence scope, third-party lineage, synthetic-derivation grouping, integrity hashes and cross-corpus dedup remain incomplete"
+    },
+    {
+      "source_corpus": "GuitarSet",
+      "source_url": "https://github.com/marl/GuitarSet",
+      "immutable_revision": "06b78479132856aaa7f866ef3b91b2f5ae950362",
+      "release_tag_commit_doi": "doi:10.5281/zenodo.3371780;commit:06b78479132856aaa7f866ef3b91b2f5ae950362",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "GitHub MIT LICENSE explicitly covers software; dataset-rights metadata for the Zenodo release must be independently resolved before admission",
+      "source_provenance": "NYU MARL GuitarSet dataset with acoustic-guitar recordings and aligned annotations; current dataset release is referenced through Zenodo DOI 10.5281/zenodo.3371780",
+      "annotation_provenance": "Rich annotations include pitch contours, string/fret positions, chords, beats, downbeats, playing style and key; much of the annotation process is automated or inferred and is not harmonic teacher-gold by default",
+      "known_issues": [
+        "Upstream reports incorrect timings in two annotations and a duplicated note in one MIDI annotation",
+        "Chord/key annotations are useful contextual evidence but are not automatically teacher-gold harmonic-function labels",
+        "Dataset licence scope and SHA-256 integrity hashes are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Dataset licence scope, integrity hashes and annotation-gold eligibility remain unresolved"
+    },
+    {
+      "source_corpus": "PDMX",
+      "source_url": "https://github.com/pnlong/PDMX",
+      "immutable_revision": "7abbd6d926d2df94129034eba81c10069c9dcbc4",
+      "release_tag_commit_doi": "doi:10.5281/zenodo.15571083;commit:7abbd6d926d2df94129034eba81c10069c9dcbc4",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "Repository MIT LICENSE covers software; dataset is presented as public-domain MusicXML but per-score source metadata must be filtered and verified, especially the documented license_conflict cases",
+      "source_provenance": "Large symbolic MusicXML dataset derived from public-facing MuseScore public-domain content and distributed through Zenodo",
+      "annotation_provenance": "Symbolic scores and metadata provide musical content/features but do not constitute teacher-gold harmonic analysis labels by default",
+      "known_issues": [
+        "Upstream documents copyright metadata discrepancies affecting 31,221 songs (12.29%) and recommends the no_license_conflict subset",
+        "42 original MuseScore files are reported corrupt and lack associated converted MXL/PDF/MID files",
+        "Only a safely filtered subset can be considered for future admission",
+        "Dataset content hashes and canonical work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Per-score licence filtering, corruption handling, integrity hashes, deduplication and harmonic-gold eligibility remain incomplete"
+    },
+    {
+      "source_corpus": "OpenScore",
+      "source_url": "https://github.com/OpenScore/Lieder",
+      "immutable_revision": "6b2dc542ce2e8aa4b78c8ee62103b210efc07015",
+      "release_tag_commit_doi": "doi:10.5281/zenodo.15450143;commit:6b2dc542ce2e8aa4b78c8ee62103b210efc07015",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "CC0-1.0",
+      "license_scope": "OpenScore Lieder README explicitly releases the score corpus under Creative Commons Zero; attribution is requested as scholarly courtesy",
+      "source_provenance": "OpenScore Lieder corpus mirror containing nineteenth-century song scores and associated data",
+      "annotation_provenance": "Scores are human-transcribed/proofread, but analysis_automatic.rntxt files are automatic harmonic analyses and cannot become teacher-gold without human validation",
+      "known_issues": [
+        "Automatic harmonic analyses must remain SILVER_AUTO/non-gold unless independently human-reviewed",
+        "OpenScore Lieder material also appears in When-in-Rome, creating cross-corpus work-family overlap",
+        "Content SHA-256 hashes and canonical work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Integrity hashes, cross-corpus deduplication and human teacher-gold harmonic labels are incomplete"
+    },
+    {
+      "source_corpus": "S3 / MCTL Symphony Dataset",
+      "source_url": "https://github.com/iis-mctl/mctl-symphony-dataset",
+      "immutable_revision": "f845a46314fc603259bbe9bdf773a7bb2d235295",
+      "release_tag_commit_doi": "commit:f845a46314fc603259bbe9bdf773a7bb2d235295",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "UNRESOLVED",
+      "license_scope": "Repository LICENSE is MIT for software; README describes embedded symbolic scores and annotation CSVs but does not establish that the software licence is the dataset-content licence",
+      "source_provenance": "Symbolic Symphony Set with four complete symphonies/16 movements, digital scores and annotations for temporal attributes, musical form and orchestral layers",
+      "annotation_provenance": "Provides explicit harmony fields including key, degree, quality, inversion and Roman numeral, plus cadence/form annotations; human/expert adjudication provenance is not sufficiently established for teacher-gold admission",
+      "known_issues": [
+        "Dataset-content licence scope must be independently resolved",
+        "Harmony annotation authorship/adjudication must be established before any teacher-gold tier assignment",
+        "Content SHA-256 hashes and cross-corpus work-family checks are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Dataset licence, annotation provenance, integrity hashes and work-family leakage evidence remain incomplete"
+    },
+    {
+      "source_corpus": "ChoCo",
+      "source_url": "https://github.com/smashub/choco",
+      "immutable_revision": "5fe168fd55be5c84512abcfbc4e6f1b1f8f0092a",
+      "release_tag_commit_doi": "commit:5fe168fd55be5c84512abcfbc4e6f1b1f8f0092a",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "MIXED-CC-BY-4.0-CC-BY-NC-SA-4.0",
+      "license_scope": "ChoCo uses CC-BY-4.0 generally, with Chordify Annotator Subjectivity, Mozart Piano Sonata and Jazz Audio-Aligned Harmony derived data under CC-BY-NC-SA-4.0; licence must be retained at partition/source level",
+      "source_provenance": "Meta-corpus integrating and standardising 20K+ timed chord annotations from heterogeneous audio and symbolic source datasets into JAMS/RDF",
+      "annotation_provenance": "Current ChoCo describes high-quality timed chord annotations produced by human annotators or crowdsourced and verified before publication; original-source provenance must remain attached to each partition/work",
+      "known_issues": [
+        "ChoCo includes source partitions such as When-in-Rome, Billboard and Mozart/DCML-derived material already represented elsewhere in this inventory",
+        "Converted Harte/Roman representations are derived views and must not be counted as independent examples",
+        "Partition-level licensing and canonical work-family deduplication are mandatory before admission",
+        "Content SHA-256 hashes are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Mixed partition licences, extensive source overlap, derived representations, integrity hashes and work-family dedup remain incomplete"
+    },
+    {
+      "source_corpus": "McGill Billboard",
+      "source_url": "https://ddmal.ca/research/The_McGill_Billboard_Project_%28Chord_Analysis_Dataset%29/",
+      "immutable_revision": "billboard-2.0",
+      "release_tag_commit_doi": "official-release:billboard-2.0",
+      "raw_archive_sha256": null,
+      "score_sha256": null,
+      "analysis_sha256": null,
+      "license_id": "CC0-1.0",
+      "license_scope": "Official DDMAL project page states the McGill Billboard annotations are legally available under CC0; original audio is not distributed and is outside this source manifest",
+      "source_provenance": "Official McGill/DDMAL Billboard Project version 2.0 chord-analysis release",
+      "annotation_provenance": "Expert ground-truth chord and music-analysis annotations; structural metadata partly derives from SALAMI while chord annotations were gathered independently by the McGill Billboard project",
+      "known_issues": [
+        "Release contains 890 annotated chart slots representing 740 distinct songs, so repeated slots for the same song must be one ST canonical work family despite any upstream evaluation convention",
+        "Some tonic/key fields can be unknown and must preserve ambiguity rather than be guessed",
+        "ChoCo contains a Billboard partition, creating direct cross-corpus overlap",
+        "Official archive SHA-256 values and canonical work-family deduplication are not yet materialized"
+      ],
+      "acquisition_status": "QUARANTINE",
+      "quarantine_reason": "Integrity hashes, repeated-song canonicalization, cross-corpus deduplication and ST split assignment are incomplete"
     }
   ],
   "samples": []
