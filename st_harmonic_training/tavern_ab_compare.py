@@ -148,6 +148,10 @@ def build_tavern_ab_comparison(
         raise TavernABComparisonError("expected raw archive SHA-256 must be lowercase hex")
 
     archive = Path(archive_path)
+    if archive.is_symlink():
+        raise TavernABComparisonError("symlink archive rejected")
+    if not archive.is_file():
+        raise TavernABComparisonError("archive must be a regular file")
     observed_hash = _sha256_file(archive)
     if observed_hash != expected_hash:
         raise TavernABComparisonError(
