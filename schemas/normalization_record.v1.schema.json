@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://st.local/schemas/normalization_record.v1.schema.json",
+  "title": "ST Harmonic Training Normalization Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["raw_source_label", "normalized_st_label", "normalization_version"],
+  "properties": {
+    "raw_source_label": {"type": "string"},
+    "normalization_version": {"const": "st-harmony-normalization-v1"},
+    "normalized_st_label": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "local_key", "roman_numeral", "bass", "inversion", "chord_family", "extension", "suspension", "alteration", "phrase", "cadence"],
+      "properties": {
+        "key": {"type": ["string", "null"]},
+        "local_key": {"type": ["string", "null"]},
+        "roman_numeral": {"type": ["string", "null"]},
+        "bass": {"type": ["string", "null"]},
+        "inversion": {"type": ["string", "null"]},
+        "chord_family": {"type": ["string", "null"]},
+        "extension": {"type": ["string", "null"]},
+        "suspension": {"type": ["string", "null"]},
+        "alteration": {"type": ["string", "null"]},
+        "phrase": {"type": ["string", "null"]},
+        "cadence": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
