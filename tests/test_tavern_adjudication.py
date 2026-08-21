@@ -96,13 +96,30 @@ class TavernAdjudicationTests(unittest.TestCase):
             "annotator_B_raw_sha256": b_hash,
         }
 
+    def build_gate(
+        self,
+        human: dict[str, object],
+        comparison: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        evidence = comparison or self.comparison()
+        return build_tavern_adjudication_gate(
+            evidence,
+            human,
+            expected_comparison_sha256=self.comparison_sha(evidence),
+            expected_pair_count=len(evidence["comparisons"]),
+        )
+
+    def test_default_gate_rejects_unpinned_comparison(self) -> None:
+        with self.assertRaises(TavernAdjudicationError):
+            build_tavern_adjudication_gate(self.comparison(), self.human_input([]))
+
     def test_complete_human_review_is_evidence_only(self) -> None:
         human = self.human_input([
             self.decision("Beethoven/B063:00:01", "CONFIRM_EQUIVALENT"),
             self.decision("Beethoven/B063:00:02", "CONFIRM_EQUIVALENT"),
             self.decision("Beethoven/B063:00:03", "PRESERVE_VARIANTS"),
         ])
-        gate = build_tavern_adjudication_gate(self.comparison(), human)
+        gate = self.build_gate(human)
         self.assertEqual(gate["review_status"], "COMPLETE")
         self.assertEqual(gate["reviewed_count"], 3)
         self.assertEqual(gate["pending_count"], 0)
@@ -114,7 +131,7 @@ class TavernAdjudicationTests(unittest.TestCase):
         human = self.human_input([
             self.decision("Beethoven/B063:00:03", "ABSTAIN"),
         ])
-        gate = build_tavern_adjudication_gate(self.comparison(), human)
+        gate = self.build_gate(human)
         self.assertEqual(gate["review_status"], "INCOMPLETE")
         self.assertEqual(gate["reviewed_count"], 1)
         self.assertEqual(gate["pending_count"], 2)
@@ -123,26 +140,26 @@ class TavernAdjudicationTests(unittest.TestCase):
         human = self.human_input([])
         human["reviewer_type"] = "AUTO"
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), human)
+            self.build_gate(human)
 
     def test_wrong_comparison_digest_fails_closed(self) -> None:
         human = self.human_input([])
         human["comparison_evidence_sha256"] = "0" * 64
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), human)
+            self.build_gate(human)
 
     def test_premature_comparison_authority_fails_closed(self) -> None:
         comparison = self.comparison()
         comparison["gold_assignment_authorized"] = True
         human = self.human_input([])
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(comparison, human)
+            self.build_gate(human, comparison)
 
     def test_duplicate_human_decision_fails_closed(self) -> None:
         item = self.decision("Beethoven/B063:00:03", "ABSTAIN")
         human = self.human_input([item, copy.deepcopy(item)])
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), human)
+            self.build_gate(human)
 
     def test_unknown_phrase_fails_closed(self) -> None:
         item = {
@@ -152,27 +169,27 @@ class TavernAdjudicationTests(unittest.TestCase):
             "annotator_B_raw_sha256": B1,
         }
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+            self.build_gate(self.human_input([item]))
 
     def test_hash_anchor_mismatch_fails_closed(self) -> None:
         item = self.decision("Beethoven/B063:00:03", "SELECT_A")
         item["annotator_A_raw_sha256"] = "f" * 64
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+            self.build_gate(self.human_input([item]))
 
     def test_text_different_cannot_be_confirmed_equivalent(self) -> None:
         item = self.decision("Beethoven/B063:00:03", "CONFIRM_EQUIVALENT")
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+            self.build_gate(self.human_input([item]))
 
     def test_source_selection_only_applies_to_text_different(self) -> None:
         item = self.decision("Beethoven/B063:00:01", "SELECT_A")
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+            self.build_gate(self.human_input([item]))
 
     def test_text_different_selection_is_still_not_gold(self) -> None:
         item = self.decision("Beethoven/B063:00:03", "SELECT_B")
-        gate = build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+        gate = self.build_gate(self.human_input([item]))
         self.assertEqual(gate["decision_counts"], {"SELECT_B": 1})
         self.assertFalse(gate["gold_assignment_authorized"])
         self.assertFalse(gate["training_authorized"])
@@ -182,7 +199,7 @@ class TavernAdjudicationTests(unittest.TestCase):
             self.decision("Beethoven/B063:00:01", "AMBIGUOUS"),
             self.decision("Beethoven/B063:00:03", "ABSTAIN"),
         ])
-        gate = build_tavern_adjudication_gate(self.comparison(), human)
+        gate = self.build_gate(human)
         self.assertEqual(gate["decision_counts"], {"ABSTAIN": 1, "AMBIGUOUS": 1})
 
     def test_relation_count_tamper_fails_closed(self) -> None:
@@ -190,11 +207,11 @@ class TavernAdjudicationTests(unittest.TestCase):
         comparison["relation_counts"] = {"BYTE_EXACT": 3}
         human = self.human_input([])
         with self.assertRaises(TavernAdjudicationError):
-            build_tavern_adjudication_gate(comparison, human)
+            self.build_gate(human, comparison)
 
     def test_output_contains_no_raw_annotation_text(self) -> None:
         item = self.decision("Beethoven/B063:00:03", "PRESERVE_VARIANTS")
-        gate = build_tavern_adjudication_gate(self.comparison(), self.human_input([item]))
+        gate = self.build_gate(self.human_input([item]))
         record = gate["decisions"][0]
         self.assertEqual(
             set(record),
@@ -213,8 +230,8 @@ class TavernAdjudicationTests(unittest.TestCase):
             self.decision("Beethoven/B063:00:01", "CONFIRM_EQUIVALENT"),
         ])
         right_human = self.human_input(list(reversed(left_human["decisions"])))
-        left = build_tavern_adjudication_gate(self.comparison(), left_human)
-        right = build_tavern_adjudication_gate(self.comparison(), right_human)
+        left = self.build_gate(left_human)
+        right = self.build_gate(right_human)
         self.assertEqual(canonical_adjudication_gate_json(left), canonical_adjudication_gate_json(right))
 
 
