@@ -10,7 +10,9 @@ AI output is never authoritative, never bypasses the deterministic resolver, and
 
 ## Current stage
 
-Stage 0 — Dataset Foundation. Real model training is blocked until Stage 0-H audit passes.
+Stage 0-A through Stage 0-H infrastructure is implemented. The real-data Stage 0-H gate remains **HOLD** because no external corpus has yet been admitted with verified immutable provenance/hashes/licenses and no leakage-safe teacher-gold sample manifest exists yet.
+
+**Real model training is not authorized.** CI asserts this fail-closed state and will fail if training becomes authorized without an explicit promotion change.
 
 ## Repository rule
 

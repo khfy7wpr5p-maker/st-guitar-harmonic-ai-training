@@ -1,0 +1,17 @@
+{
+  "candidate_sources": [
+    "DCML corpora",
+    "TAVERN",
+    "When-in-Rome",
+    "Dilemmadata",
+    "AugmentedNet",
+    "GuitarSet",
+    "PDMX",
+    "OpenScore",
+    "S3 / MCTL Symphony Dataset",
+    "ChoCo",
+    "McGill Billboard"
+  ],
+  "source_manifests": [],
+  "samples": []
+}
