@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Raw datasets / archives / derived training material
+/data/
+/datasets/
+/raw/
+/downloads/
+/extracted/
+/cache/
+
+# Model artifacts / runs
+/checkpoints/
+/models/
+/artifacts/
+/runs/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.h5
+*.safetensors
+
+# Large/source media and archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.npy
+*.npz
+*.wav
+*.flac
+*.mp3
+*.mid
+*.midi
+*.mxl
+*.musicxml
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
