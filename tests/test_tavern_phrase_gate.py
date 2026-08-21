@@ -80,6 +80,12 @@ class TavernPhraseGateTests(unittest.TestCase):
         with self.assertRaises(TavernPhraseGateError):
             build_tavern_phrase_gate(structure, lineage)
 
+    def test_count_preserving_lineage_identity_tamper_fails_closed(self) -> None:
+        structure, lineage = self.load_inputs()
+        lineage["work_families"][0]["source_work_id"] = "TEST/NOT_A_DOCUMENTED_WORK"
+        with self.assertRaises(TavernPhraseGateError):
+            build_tavern_phrase_gate(structure, lineage)
+
     def test_canonical_json_is_deterministic(self) -> None:
         structure, lineage = self.load_inputs()
         left = canonical_phrase_gate_json(build_tavern_phrase_gate(structure, lineage))
