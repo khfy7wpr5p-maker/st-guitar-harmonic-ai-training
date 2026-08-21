@@ -13,6 +13,10 @@ from .tavern_structure import PINNED_TAVERN_REVISION
 
 ADJUDICATION_INPUT_SCHEMA = "st-tavern-human-adjudication-v1"
 ADJUDICATION_GATE_SCHEMA = "st-tavern-adjudication-gate-v1"
+PINNED_TAVERN_AB_COMPARISON_SHA256 = (
+    "b6f3e80c98acbdeac964ae47f568bf9a6c7eead6efbc221b47d74cdb56293db4"
+)
+PINNED_TAVERN_AB_PAIR_COUNT = 937
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 DECISIONS = frozenset({
@@ -24,6 +28,11 @@ DECISIONS = frozenset({
     "ABSTAIN",
 })
 EQUIVALENT_RELATIONS = frozenset({"BYTE_EXACT", "TEXT_LINE_ENDING_EQUIVALENT"})
+ALLOWED_RELATIONS = frozenset({
+    "BYTE_EXACT",
+    "TEXT_LINE_ENDING_EQUIVALENT",
+    "TEXT_DIFFERENT",
+})
 
 
 class TavernAdjudicationError(ValueError):
@@ -48,7 +57,19 @@ def _required_sha(data: dict[str, Any], key: str) -> str:
     return value
 
 
-def _validate_comparison(data: object) -> tuple[dict[str, dict[str, Any]], str]:
+def _validate_expected_sha(value: str) -> str:
+    normalized = value.strip().lower()
+    if not SHA256_RE.fullmatch(normalized):
+        raise TavernAdjudicationError("expected comparison SHA-256 must be lowercase hex")
+    return normalized
+
+
+def _validate_comparison(
+    data: object,
+    *,
+    expected_comparison_sha256: str,
+    expected_pair_count: int | None,
+) -> tuple[dict[str, dict[str, Any]], str]:
     if not isinstance(data, dict) or data.get("schema_version") != COMPARISON_SCHEMA:
         raise TavernAdjudicationError("unsupported TAVERN A/B comparison evidence")
     if data.get("source_corpus") != "TAVERN":
@@ -72,6 +93,10 @@ def _validate_comparison(data: object) -> tuple[dict[str, dict[str, Any]], str]:
         raise TavernAdjudicationError("comparisons must be an array of objects")
     if not isinstance(pair_count, int) or pair_count < 0 or len(comparisons) != pair_count:
         raise TavernAdjudicationError("comparison pair_count mismatch")
+    if expected_pair_count is not None and pair_count != expected_pair_count:
+        raise TavernAdjudicationError(
+            f"comparison pair_count is not pinned evidence: expected {expected_pair_count}, got {pair_count}"
+        )
 
     by_phrase: dict[str, dict[str, Any]] = {}
     relation_counts: Counter[str] = Counter()
@@ -80,7 +105,7 @@ def _validate_comparison(data: object) -> tuple[dict[str, dict[str, Any]], str]:
         if phrase_key in by_phrase:
             raise TavernAdjudicationError(f"duplicate comparison phrase_key: {phrase_key}")
         relation = _required_text(record, "relation")
-        if relation not in {"BYTE_EXACT", "TEXT_LINE_ENDING_EQUIVALENT", "TEXT_DIFFERENT"}:
+        if relation not in ALLOWED_RELATIONS:
             raise TavernAdjudicationError(f"unsupported comparison relation: {relation}")
         for key in (
             "annotator_A_raw_sha256",
@@ -97,7 +122,13 @@ def _validate_comparison(data: object) -> tuple[dict[str, dict[str, Any]], str]:
         raise TavernAdjudicationError("comparison relation_counts mismatch")
 
     canonical = canonical_ab_comparison_json(data)
-    return by_phrase, _sha256_text(canonical)
+    comparison_sha256 = _sha256_text(canonical)
+    if comparison_sha256 != expected_comparison_sha256:
+        raise TavernAdjudicationError(
+            "comparison evidence SHA-256 mismatch: "
+            f"expected {expected_comparison_sha256}, observed {comparison_sha256}"
+        )
+    return by_phrase, comparison_sha256
 
 
 def _validate_human_input(
@@ -166,8 +197,21 @@ def _validate_human_input(
 def build_tavern_adjudication_gate(
     comparison_evidence: object,
     human_adjudication: object,
+    *,
+    expected_comparison_sha256: str = PINNED_TAVERN_AB_COMPARISON_SHA256,
+    expected_pair_count: int | None = PINNED_TAVERN_AB_PAIR_COUNT,
 ) -> dict[str, object]:
-    comparison_by_phrase, comparison_sha256 = _validate_comparison(comparison_evidence)
+    expected_sha = _validate_expected_sha(expected_comparison_sha256)
+    if expected_pair_count is not None and (
+        not isinstance(expected_pair_count, int) or expected_pair_count < 0
+    ):
+        raise TavernAdjudicationError("expected_pair_count must be non-negative integer or null")
+
+    comparison_by_phrase, comparison_sha256 = _validate_comparison(
+        comparison_evidence,
+        expected_comparison_sha256=expected_sha,
+        expected_pair_count=expected_pair_count,
+    )
     reviewer_ref, review_session_id, decisions = _validate_human_input(
         human_adjudication,
         comparison_by_phrase,
