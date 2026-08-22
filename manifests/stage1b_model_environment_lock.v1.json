@@ -1,0 +1,1 @@
+{"algorithm":"FIELDWISE_MULTINOMIAL_NAIVE_BAYES","checkpoint_format":"CANONICAL_JSON_ONLY","dependencies":[],"implementation_version":"fieldwise-multinomial-nb-v1","model_seed":0,"pickle_loading_allowed":false,"python_version":"3.12.8","schema_version":"st-guitar-harmony-model-environment-lock-v1","stdlib_only":true}
