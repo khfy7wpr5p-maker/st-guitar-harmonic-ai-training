@@ -9,10 +9,7 @@ import re
 import zipfile
 from typing import Any
 
-from .normalization import (
-    NORMALIZATION_VERSION,
-    build_normalization_record,
-)
+from .normalization import NORMALIZATION_VERSION, build_normalization_record
 from .tavern_gold_materialization import PINNED_COUNT, PINNED_VALIDATED_SHA256
 from .tavern_raw_label_realization import (
     MAX_ARCHIVE_BYTES,
@@ -51,7 +48,9 @@ def _json_sequence(values: list[str]) -> str:
     return json.dumps(values, ensure_ascii=False, separators=(",", ":"))
 
 
-def parse_tavern_analysis_label(raw_source_label: str) -> tuple[dict[str, str | None], dict[str, object]]:
+def parse_tavern_analysis_label(
+    raw_source_label: str,
+) -> tuple[dict[str, str | None], dict[str, object]]:
     if not isinstance(raw_source_label, str):
         raise TavernNormalizationAdapterError("raw TAVERN label must be text")
     lines = raw_source_label.splitlines()
@@ -127,20 +126,27 @@ def parse_tavern_analysis_label(raw_source_label: str) -> tuple[dict[str, str | 
     return mapping, metadata
 
 
-def _validate_realization(realization: object) -> dict[str, Any]:
+def _validate_realization(
+    realization: object,
+    *,
+    expected_record_count: int,
+    expected_selected_label_count: int,
+    expected_archive_sha256: str,
+    expected_decision_sha256: str,
+) -> dict[str, Any]:
     if not isinstance(realization, dict) or realization.get("schema_version") != REALIZATION_SCHEMA:
         raise TavernNormalizationAdapterError("unsupported Stage 0-V realization schema")
     if realization.get("source_corpus") != "TAVERN_REVIEWED_694":
         raise TavernNormalizationAdapterError("source subset mismatch")
     if realization.get("source_revision") != PINNED_TAVERN_REVISION:
         raise TavernNormalizationAdapterError("source revision mismatch")
-    if realization.get("archive_sha256") != PINNED_TAVERN_ARCHIVE_SHA256:
+    if realization.get("archive_sha256") != expected_archive_sha256:
         raise TavernNormalizationAdapterError("archive digest mismatch")
-    if realization.get("validated_human_decisions_sha256") != PINNED_VALIDATED_SHA256:
+    if realization.get("validated_human_decisions_sha256") != expected_decision_sha256:
         raise TavernNormalizationAdapterError("validated human-decision digest mismatch")
-    if realization.get("record_count") != PINNED_COUNT:
+    if realization.get("record_count") != expected_record_count:
         raise TavernNormalizationAdapterError("realization record count mismatch")
-    if realization.get("selected_label_count") != EXPECTED_SELECTED_LABEL_COUNT:
+    if realization.get("selected_label_count") != expected_selected_label_count:
         raise TavernNormalizationAdapterError("selected label count mismatch")
     if realization.get("raw_label_realization_complete") is not True:
         raise TavernNormalizationAdapterError("raw-label realization must be complete")
@@ -151,6 +157,8 @@ def _validate_realization(realization: object) -> dict[str, Any]:
     records = realization.get("records")
     if not isinstance(records, list) or not all(isinstance(record, dict) for record in records):
         raise TavernNormalizationAdapterError("realization records are malformed")
+    if len(records) != expected_record_count:
+        raise TavernNormalizationAdapterError("realization record payload count mismatch")
     return realization
 
 
@@ -158,20 +166,35 @@ def build_tavern_normalized_targets(
     realization: object,
     *,
     archive_path: str | Path,
+    expected_record_count: int = PINNED_COUNT,
+    expected_selected_label_count: int = EXPECTED_SELECTED_LABEL_COUNT,
+    expected_archive_sha256: str = PINNED_TAVERN_ARCHIVE_SHA256,
+    expected_decision_sha256: str = PINNED_VALIDATED_SHA256,
 ) -> dict[str, object]:
-    realized = _validate_realization(realization)
+    realized = _validate_realization(
+        realization,
+        expected_record_count=expected_record_count,
+        expected_selected_label_count=expected_selected_label_count,
+        expected_archive_sha256=expected_archive_sha256,
+        expected_decision_sha256=expected_decision_sha256,
+    )
     archive_file = _bounded_regular_file(
         archive_path, max_bytes=MAX_ARCHIVE_BYTES, label="archive"
     )
     archive_bytes = archive_file.read_bytes()
-    if hashlib.sha256(archive_bytes).hexdigest() != PINNED_TAVERN_ARCHIVE_SHA256:
+    actual_archive_sha256 = hashlib.sha256(archive_bytes).hexdigest()
+    if actual_archive_sha256 != expected_archive_sha256:
         raise TavernNormalizationAdapterError("TAVERN archive snapshot SHA-256 mismatch")
 
     normalized_records: list[dict[str, object]] = []
     stats: Counter[str] = Counter()
+    seen_phrases: set[str] = set()
     try:
         with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
             infos = _validated_zip_members(archive)
+            corrupt = archive.testzip()
+            if corrupt is not None:
+                raise TavernNormalizationAdapterError(f"corrupt archive member: {corrupt}")
             members = {info.filename: info for info in infos}
             for record in realized["records"]:
                 phrase_key = record.get("phrase_key")
@@ -179,7 +202,20 @@ def build_tavern_normalized_targets(
                 selected = record.get("selected_labels")
                 if not isinstance(phrase_key, str) or not isinstance(selected, list):
                     raise TavernNormalizationAdapterError("malformed realization record")
+                if phrase_key in seen_phrases:
+                    raise TavernNormalizationAdapterError(f"duplicate phrase_key: {phrase_key}")
+                seen_phrases.add(phrase_key)
+                expected_target_count = 2 if decision == "PRESERVE_VARIANTS" else 1
+                if decision not in {"SELECT_A", "SELECT_B", "PRESERVE_VARIANTS"}:
+                    raise TavernNormalizationAdapterError(
+                        f"unsupported realized human decision: {decision}"
+                    )
+                if len(selected) != expected_target_count:
+                    raise TavernNormalizationAdapterError(
+                        f"selected target count disagrees with decision: {phrase_key}"
+                    )
                 targets: list[dict[str, object]] = []
+                target_sources: set[str] = set()
                 for selected_label in selected:
                     if not isinstance(selected_label, dict):
                         raise TavernNormalizationAdapterError("malformed selected label")
@@ -188,6 +224,11 @@ def build_tavern_normalized_targets(
                     raw_sha256 = selected_label.get("raw_sha256")
                     if source not in {"A", "B"} or not isinstance(member_name, str) or not isinstance(raw_sha256, str):
                         raise TavernNormalizationAdapterError("selected label metadata malformed")
+                    if source in target_sources:
+                        raise TavernNormalizationAdapterError(
+                            f"duplicate selected source for phrase: {phrase_key}/{source}"
+                        )
+                    target_sources.add(source)
                     info = members.get(member_name)
                     if info is None:
                         raise TavernNormalizationAdapterError(
@@ -242,20 +283,26 @@ def build_tavern_normalized_targets(
                     )
                     stats["harmonic_token_count"] += int(metadata["harmonic_token_count"])
                     stats["function_token_count"] += int(metadata["function_token_count"])
+                if decision == "SELECT_A" and target_sources != {"A"}:
+                    raise TavernNormalizationAdapterError("SELECT_A source mismatch")
+                if decision == "SELECT_B" and target_sources != {"B"}:
+                    raise TavernNormalizationAdapterError("SELECT_B source mismatch")
+                if decision == "PRESERVE_VARIANTS" and target_sources != {"A", "B"}:
+                    raise TavernNormalizationAdapterError("variant source set mismatch")
                 normalized_records.append(
                     {
                         "phrase_key": phrase_key,
                         "decision": decision,
-                        "targets": targets,
+                        "targets": sorted(targets, key=lambda target: str(target["source"])),
                     }
                 )
     except zipfile.BadZipFile as exc:
         raise TavernNormalizationAdapterError("invalid TAVERN ZIP archive") from exc
 
     normalized_records.sort(key=lambda record: str(record["phrase_key"]))
-    if len(normalized_records) != PINNED_COUNT:
+    if len(normalized_records) != expected_record_count:
         raise TavernNormalizationAdapterError("normalized record count mismatch")
-    if stats["normalized_target_count"] != EXPECTED_SELECTED_LABEL_COUNT:
+    if stats["normalized_target_count"] != expected_selected_label_count:
         raise TavernNormalizationAdapterError("normalized target count mismatch")
     manifest_bytes = json.dumps(
         normalized_records,
@@ -269,8 +316,10 @@ def build_tavern_normalized_targets(
         "normalization_version": NORMALIZATION_VERSION,
         "source_corpus": "TAVERN_REVIEWED_694",
         "source_revision": PINNED_TAVERN_REVISION,
-        "archive_sha256": PINNED_TAVERN_ARCHIVE_SHA256,
-        "validated_human_decisions_sha256": PINNED_VALIDATED_SHA256,
+        "archive_sha256": actual_archive_sha256,
+        "validated_human_decisions_sha256": realized[
+            "validated_human_decisions_sha256"
+        ],
         "record_count": len(normalized_records),
         "normalized_target_count": stats["normalized_target_count"],
         "harmonic_spine_counts": {
