@@ -21,7 +21,8 @@ jobs:
       TAVERN_COMPARISON: /tmp/stage0l_tavern_ab_comparison.v1.json
       TAVERN_REVIEW_BASE_DIR: /tmp/stage0n-tavern-human-review-base
       TAVERN_REVIEW_SCORE_DIR: /tmp/stage0n1-tavern-score-aware-review
-      TAVERN_REVIEW_DIR: /tmp/stage0n2-tavern-score-aware-review-tr
+      TAVERN_REVIEW_TR_DIR: /tmp/stage0n2-tavern-score-aware-review-tr
+      TAVERN_REVIEW_DIR: /tmp/stage0n3-tavern-explained-diff-review-tr
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -66,8 +67,13 @@ jobs:
         run: |
           python -m scripts.localize_tavern_review_tr \
             --source-dir "$TAVERN_REVIEW_SCORE_DIR" \
+            --output-dir "$TAVERN_REVIEW_TR_DIR"
+      - name: Add source-bounded Turkish A/B difference explanations
+        run: |
+          python -m scripts.enhance_tavern_review_diff_tr \
+            --source-dir "$TAVERN_REVIEW_TR_DIR" \
             --output-dir "$TAVERN_REVIEW_DIR"
-      - name: Verify final Turkish package integrity
+      - name: Verify final explained-difference package integrity
         run: |
           python - <<'PY'
           import hashlib
@@ -77,8 +83,8 @@ jobs:
 
           root = Path(os.environ['TAVERN_REVIEW_DIR'])
           manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
-          if manifest['schema_version'] != 'st-tavern-score-aware-review-tr-v1':
-              raise SystemExit('unexpected Turkish review schema')
+          if manifest['schema_version'] != 'st-tavern-score-aware-review-tr-diff-v1':
+              raise SystemExit('unexpected Stage 0-N3 review schema')
           if manifest['review_ui_language'] != 'tr':
               raise SystemExit('review UI is not Turkish')
           if manifest['pair_count'] != 937:
@@ -87,6 +93,14 @@ jobs:
               raise SystemExit('unexpected batch count')
           if not manifest['decision_codes_preserved']:
               raise SystemExit('machine decision codes were not preserved')
+          if not manifest['difference_explanations_present']:
+              raise SystemExit('difference explanations missing')
+          if not manifest['raw_annotations_preserved']:
+              raise SystemExit('raw annotation preservation flag missing')
+          if manifest['semantic_glossary_policy'] != 'SOURCE_DOCUMENTED_ONLY':
+              raise SystemExit('semantic glossary policy is not source-bounded')
+          if manifest['undocumented_function_tokens_interpreted']:
+              raise SystemExit('undocumented function tokens must remain uninterpreted')
           if manifest['decisions_preselected']:
               raise SystemExit('review package contains preselected decisions')
           if any(manifest[field] is not False for field in (
@@ -97,6 +111,7 @@ jobs:
               raise SystemExit('review package must remain non-authoritative')
 
           total = 0
+          differences = 0
           for batch in manifest['batches']:
               path = root / batch['filename']
               actual = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -104,14 +119,19 @@ jobs:
                   raise SystemExit(f'batch hash mismatch: {path.name}')
               text = path.read_text(encoding='utf-8')
               total += batch['record_count']
+              differences += batch['difference_point_count']
               if '<html lang="tr">' not in text:
                   raise SystemExit(f'non-Turkish batch language: {path.name}')
-              if 'A analizi daha doğru' not in text and 'İki analiz eşdeğer' not in text:
-                  raise SystemExit(f'Turkish decision labels missing: {path.name}')
+              if 'A/B fark özeti' not in text:
+                  raise SystemExit(f'difference summary missing: {path.name}')
+              if 'Ham TAVERN analizlerini göster' not in text:
+                  raise SystemExit(f'raw review disclosure missing: {path.name}')
               if '<input type="radio"' in text and ' checked' in text.split('<script', 1)[0]:
                   raise SystemExit(f'preselected review decision: {path.name}')
           if total != 937:
-              raise SystemExit(f'localized record total mismatch: {total}')
+              raise SystemExit(f'record total mismatch: {total}')
+          if differences != manifest['difference_point_count']:
+              raise SystemExit('difference total mismatch')
           actual_index = hashlib.sha256((root / 'index.html').read_bytes()).hexdigest()
           if actual_index != manifest['index_sha256']:
               raise SystemExit('index hash mismatch')
@@ -120,17 +140,20 @@ jobs:
               'review_ui_language': manifest['review_ui_language'],
               'pair_count': manifest['pair_count'],
               'batch_count': manifest['batch_count'],
+              'difference_point_count': manifest['difference_point_count'],
+              'semantic_glossary_policy': manifest['semantic_glossary_policy'],
+              'undocumented_function_tokens_interpreted': manifest['undocumented_function_tokens_interpreted'],
               'decision_codes_preserved': manifest['decision_codes_preserved'],
               'decisions_preselected': manifest['decisions_preselected'],
               'final_hashes_verified': True,
               'training_authorized': manifest['training_authorized'],
           }, sort_keys=True, ensure_ascii=False))
           PY
-      - name: Upload short-lived Turkish score-aware review package
+      - name: Upload short-lived Turkish explained-difference review package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: stage0n2-tavern-score-aware-human-review-tr
-          path: /tmp/stage0n2-tavern-score-aware-review-tr
+          name: stage0n3-tavern-explained-diff-human-review-tr
+          path: /tmp/stage0n3-tavern-explained-diff-review-tr
           if-no-files-found: error
           retention-days: 1
           compression-level: 9
