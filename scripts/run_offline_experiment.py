@@ -7,8 +7,8 @@ from pathlib import Path
 from st_harmonic_training.offline_experiment import (
     build_experiment_summary,
     canonical_experiment_json,
-    run_offline_experiment,
 )
+from st_harmonic_training.official_experiment_gate import run_official_offline_experiment
 from st_harmonic_training.safe_ingest import load_bounded_json
 from st_harmonic_training.sparse_nb_model import canonical_model_json
 
@@ -25,8 +25,8 @@ def _write_new(path: Path, text: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Run the authorized Stage 1-C offline experiment on TRAIN and VALIDATION "
-            "private shards only. Python 3.12.8 is enforced."
+            "Run the authorized Stage 1-C offline experiment on pinned private "
+            "TRAIN and VALIDATION shards only. Python 3.12.8 is enforced."
         )
     )
     parser.add_argument("train_shard", type=Path)
@@ -35,7 +35,7 @@ def main() -> int:
     parser.add_argument("output_dir", type=Path)
     args = parser.parse_args()
 
-    result = run_offline_experiment(
+    result = run_official_offline_experiment(
         load_bounded_json(args.train_shard, max_bytes=MAX_SHARD_BYTES),
         load_bounded_json(args.validation_shard, max_bytes=MAX_SHARD_BYTES),
         load_bounded_json(args.entry_completion),
