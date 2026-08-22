@@ -4,7 +4,17 @@ import argparse
 import json
 from pathlib import Path
 
-from st_harmonic_training.tavern_review_diff import enhance_review_package
+from st_harmonic_training.tavern_review_diff import TavernReviewDiffError, enhance_review_package
+
+
+def reject_source_symlinks(source_dir: Path) -> None:
+    if source_dir.is_symlink():
+        raise TavernReviewDiffError("source review directory symlink rejected")
+    if not source_dir.is_dir():
+        raise TavernReviewDiffError("source review package must be a directory")
+    for path in source_dir.rglob("*"):
+        if path.is_symlink():
+            raise TavernReviewDiffError(f"source review symlink rejected: {path.relative_to(source_dir)}")
 
 
 def main() -> int:
@@ -14,6 +24,7 @@ def main() -> int:
     parser.add_argument("--source-dir", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     args = parser.parse_args()
+    reject_source_symlinks(args.source_dir)
     manifest = enhance_review_package(args.source_dir, args.output_dir)
     print(json.dumps({
         "schema_version": manifest["schema_version"],
