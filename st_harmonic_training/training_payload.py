@@ -22,6 +22,7 @@ from .tavern_reviewed_split import (
 from .tavern_structure import PINNED_TAVERN_REVISION
 
 PAYLOAD_SCHEMA = "st-guitar-harmony-training-payload-manifest-v1"
+SUMMARY_SCHEMA = "st-guitar-harmony-training-payload-summary-v1"
 EXPECTED_RECORD_COUNT = PINNED_COUNT
 EXPECTED_TARGET_COUNT = 747
 EXPECTED_GOLD_COUNTS = {"GOLD_EXPERT": 641, "GOLD_VARIANT": 53}
@@ -63,7 +64,9 @@ def _index_unique(records: list[dict[str, Any]], label: str) -> dict[str, dict[s
 
 
 def _sha(value: object, label: str) -> str:
-    if not isinstance(value, str) or len(value) != SHA256_LEN or any(c not in "0123456789abcdef" for c in value):
+    if not isinstance(value, str) or len(value) != SHA256_LEN or any(
+        c not in "0123456789abcdef" for c in value
+    ):
         raise TrainingPayloadError(f"malformed {label} SHA-256")
     return value
 
@@ -74,14 +77,25 @@ def build_training_payload_manifest(
     reviewed_split: object,
     *,
     expected_record_count: int = EXPECTED_RECORD_COUNT,
+    expected_target_count: int = EXPECTED_TARGET_COUNT,
+    expected_partition_distribution: dict[str, int] | None = None,
+    expected_gold_counts: dict[str, int] | None = None,
     expected_feature_manifest_sha256: str = PINNED_FEATURE_MANIFEST_SHA256,
     expected_target_manifest_sha256: str = PINNED_NORMALIZED_TARGET_MANIFEST_SHA256,
+    expected_payload_manifest_sha256: str | None = PINNED_TRAINING_PAYLOAD_MANIFEST_SHA256,
 ) -> dict[str, object]:
+    if expected_partition_distribution is None:
+        expected_partition_distribution = EXPECTED_RECORD_DISTRIBUTION
+    if expected_gold_counts is None:
+        expected_gold_counts = EXPECTED_GOLD_COUNTS
+
     feature_data, feature_records = _require_records(features, FEATURE_SCHEMA, "feature")
     target_data, target_records = _require_records(
         normalized_targets, NORMALIZED_TARGET_SCHEMA, "normalized target"
     )
-    split_data, split_records = _require_records(reviewed_split, SPLIT_SCHEMA, "reviewed split")
+    split_data, split_records = _require_records(
+        reviewed_split, SPLIT_SCHEMA, "reviewed split"
+    )
 
     for data, label in (
         (feature_data, "feature"),
@@ -113,7 +127,7 @@ def build_training_payload_manifest(
 
     if split_data.get("seed") != EXPECTED_SEED:
         raise TrainingPayloadError("split seed mismatch")
-    if split_data.get("record_distribution") != EXPECTED_RECORD_DISTRIBUTION:
+    if split_data.get("record_distribution") != expected_partition_distribution:
         raise TrainingPayloadError("split record distribution mismatch")
     if split_data.get("label_aware_seed_selection") is not False:
         raise TrainingPayloadError("split seed must remain label-blind")
@@ -123,7 +137,10 @@ def build_training_payload_manifest(
         raise TrainingPayloadError("cross-corpus partition inheritance is not enforced")
 
     if not (
-        len(feature_records) == len(target_records) == len(split_records) == expected_record_count
+        len(feature_records)
+        == len(target_records)
+        == len(split_records)
+        == expected_record_count
     ):
         raise TrainingPayloadError("payload component record counts differ")
 
@@ -151,7 +168,10 @@ def build_training_payload_manifest(
         source_work_id = split.get("source_work_id")
         canonical_work_id = split.get("canonical_work_id")
         split_group_id = split.get("split_group_id")
-        if not all(isinstance(value, str) and value for value in (source_work_id, canonical_work_id, split_group_id)):
+        if not all(
+            isinstance(value, str) and value
+            for value in (source_work_id, canonical_work_id, split_group_id)
+        ):
             raise TrainingPayloadError(f"split identity missing for {phrase}")
         if not phrase.startswith(f"{source_work_id}:"):
             raise TrainingPayloadError(f"phrase/source-work mismatch for {phrase}")
@@ -161,7 +181,9 @@ def build_training_payload_manifest(
         targets = target.get("targets")
         if decision not in {"SELECT_A", "SELECT_B", "PRESERVE_VARIANTS"}:
             raise TrainingPayloadError(f"unsupported human decision for {phrase}")
-        if not isinstance(targets, list) or not all(isinstance(item, dict) for item in targets):
+        if not isinstance(targets, list) or not all(
+            isinstance(item, dict) for item in targets
+        ):
             raise TrainingPayloadError(f"target set malformed for {phrase}")
         expected_target_set_size = 2 if decision == "PRESERVE_VARIANTS" else 1
         if len(targets) != expected_target_set_size:
@@ -189,10 +211,14 @@ def build_training_payload_manifest(
             raise TrainingPayloadError(f"SELECT_A source mismatch for {phrase}")
         if decision == "SELECT_B" and [item["source"] for item in target_set] != ["B"]:
             raise TrainingPayloadError(f"SELECT_B source mismatch for {phrase}")
-        if decision == "PRESERVE_VARIANTS" and [item["source"] for item in target_set] != ["A", "B"]:
+        if decision == "PRESERVE_VARIANTS" and [
+            item["source"] for item in target_set
+        ] != ["A", "B"]:
             raise TrainingPayloadError(f"variant source set mismatch for {phrase}")
 
-        gold_tier = "GOLD_VARIANT" if decision == "PRESERVE_VARIANTS" else "GOLD_EXPERT"
+        gold_tier = (
+            "GOLD_VARIANT" if decision == "PRESERVE_VARIANTS" else "GOLD_EXPERT"
+        )
         record = {
             "phrase_key": phrase,
             "source_work_id": source_work_id,
@@ -221,20 +247,23 @@ def build_training_payload_manifest(
     observed_partition_counts = {
         key: partition_counts[key] for key in sorted(partition_counts)
     }
-    if observed_partition_counts != EXPECTED_RECORD_DISTRIBUTION:
+    if observed_partition_counts != expected_partition_distribution:
         raise TrainingPayloadError("payload partition distribution changed")
     observed_gold_counts = {key: gold_counts[key] for key in sorted(gold_counts)}
-    if observed_gold_counts != EXPECTED_GOLD_COUNTS:
+    if observed_gold_counts != expected_gold_counts:
         raise TrainingPayloadError("payload gold distribution changed")
-    if target_count != EXPECTED_TARGET_COUNT:
+    if target_count != expected_target_count:
         raise TrainingPayloadError("payload target count changed")
 
     manifest_bytes = json.dumps(
         records, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
     manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
-    if expected_record_count == EXPECTED_RECORD_COUNT and manifest_sha256 != PINNED_TRAINING_PAYLOAD_MANIFEST_SHA256:
-        raise TrainingPayloadError("real training payload manifest digest changed")
+    if (
+        expected_payload_manifest_sha256 is not None
+        and manifest_sha256 != expected_payload_manifest_sha256
+    ):
+        raise TrainingPayloadError("training payload manifest digest changed")
 
     return {
         "schema_version": PAYLOAD_SCHEMA,
@@ -250,7 +279,7 @@ def build_training_payload_manifest(
         "target_count": target_count,
         "partition_distribution": observed_partition_counts,
         "gold_tier_counts": observed_gold_counts,
-        "variant_record_count": observed_gold_counts["GOLD_VARIANT"],
+        "variant_record_count": observed_gold_counts.get("GOLD_VARIANT", 0),
         "augmentation_scope": "TRAIN_ONLY",
         "holdout_labels_available_to_training": False,
         "holdout_labels_available_to_model_selection": False,
@@ -296,7 +325,7 @@ def build_training_payload_summary(data: object) -> dict[str, object]:
         "cross_corpus_alias_partition_inheritance_required",
         "training_payload_manifest_sha256",
     )
-    result: dict[str, object] = {"schema_version": "st-guitar-harmony-training-payload-summary-v1"}
+    result: dict[str, object] = {"schema_version": SUMMARY_SCHEMA}
     result.update({field: data[field] for field in fields})
     result.update(
         {
@@ -311,9 +340,6 @@ def build_training_payload_summary(data: object) -> dict[str, object]:
 
 
 def canonical_training_payload_json(data: dict[str, object]) -> str:
-    if data.get("schema_version") not in {
-        PAYLOAD_SCHEMA,
-        "st-guitar-harmony-training-payload-summary-v1",
-    }:
+    if data.get("schema_version") not in {PAYLOAD_SCHEMA, SUMMARY_SCHEMA}:
         raise TrainingPayloadError("unsupported training payload schema")
     return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
