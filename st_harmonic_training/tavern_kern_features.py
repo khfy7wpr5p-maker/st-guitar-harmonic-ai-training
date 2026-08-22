@@ -5,7 +5,6 @@ import hashlib
 import json
 from pathlib import Path
 import zipfile
-from typing import Any
 
 from .tavern_gold_materialization import PINNED_COUNT
 from .tavern_raw_label_realization import (
@@ -14,10 +13,7 @@ from .tavern_raw_label_realization import (
     _bounded_regular_file,
     _validated_zip_members,
 )
-from .tavern_score_input_realization import (
-    SCORE_INPUT_SCHEMA,
-    _archive_root,
-)
+from .tavern_score_input_realization import SCORE_INPUT_SCHEMA, _archive_root
 from .tavern_structure import PINNED_TAVERN_REVISION
 
 FEATURE_SCHEMA = "st-tavern-kern-features-v1"
@@ -156,6 +152,7 @@ def build_tavern_kern_features(
 
     records: list[dict[str, object]] = []
     global_stats: Counter[str] = Counter()
+    spine_hist: Counter[int] = Counter()
     vocabulary: set[str] = set()
     distinct_counts: list[int] = []
     occurrence_counts: list[int] = []
@@ -192,10 +189,7 @@ def build_tavern_kern_features(
                     raise TavernKernFeatureError(f"score is not UTF-8: {phrase_key}") from exc
                 features, stats = extract_kern_bow_features(text)
                 feature_bytes = json.dumps(
-                    features,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                    ensure_ascii=False,
+                    features, sort_keys=True, separators=(",", ":"), ensure_ascii=False
                 ).encode("utf-8")
                 records.append(
                     {
@@ -208,7 +202,16 @@ def build_tavern_kern_features(
                 vocabulary.update(features)
                 distinct_counts.append(stats["distinct_feature_count"])
                 occurrence_counts.append(stats["feature_occurrence_count"])
-                global_stats.update(stats)
+                spine_hist[stats["kern_spine_count"]] += 1
+                for key in (
+                    "processed_row_count",
+                    "kern_atom_count",
+                    "interpretation_token_count",
+                    "barline_token_count",
+                    "null_token_count",
+                    "feature_occurrence_count",
+                ):
+                    global_stats[key] += stats[key]
     except zipfile.BadZipFile as exc:
         raise TavernKernFeatureError("invalid TAVERN ZIP archive") from exc
 
@@ -231,10 +234,7 @@ def build_tavern_kern_features(
         "interpretation_token_count": global_stats["interpretation_token_count"],
         "barline_token_count": global_stats["barline_token_count"],
         "null_token_count": global_stats["null_token_count"],
-        "kern_spine_counts": {
-            str(count): sum(1 for item in input_records if False)
-            for count in ()
-        },
+        "kern_spine_counts": {str(key): spine_hist[key] for key in sorted(spine_hist)},
         "distinct_feature_per_record_min": min(distinct_counts),
         "distinct_feature_per_record_max": max(distinct_counts),
         "feature_occurrence_per_record_min": min(occurrence_counts),
@@ -270,6 +270,7 @@ def build_tavern_kern_features_summary(data: object) -> dict[str, object]:
         "interpretation_token_count",
         "barline_token_count",
         "null_token_count",
+        "kern_spine_counts",
         "distinct_feature_per_record_min",
         "distinct_feature_per_record_max",
         "feature_occurrence_per_record_min",
