@@ -7,7 +7,6 @@ import math
 import sys
 from typing import Any
 
-from .baseline_thresholds import EXPECTED_THRESHOLDS
 from .normalization import NORMALIZED_FIELDS
 from .sparse_nb_model import (
     MODEL_IMPLEMENTATION_VERSION,
@@ -16,7 +15,7 @@ from .sparse_nb_model import (
     fit_fieldwise_sparse_nb,
     predict_fieldwise_sparse_nb,
 )
-from .stage1b_entry_completion import ENTRY_COMPLETION_SCHEMA
+from .stage1b_entry_completion import ENTRY_COMPLETION_SCHEMA, EXPECTED_THRESHOLDS
 from .tavern_kern_features import FEATURE_SCHEMA, PINNED_SCORE_INPUT_MANIFEST_SHA256
 from .tavern_normalization_adapter import NORMALIZED_TARGET_SCHEMA
 from .tavern_reviewed_split import EXPECTED_SEED, SPLIT_SCHEMA
@@ -194,12 +193,15 @@ def build_private_experiment_shards(
         if not isinstance(split_group, str) or not split_group:
             raise OfflineExperimentError(f"missing split group for {phrase}")
         split_groups[str(partition)].add(split_group)
+        feature_sha = feature.get("feature_sha256")
+        if not isinstance(feature_sha, str) or len(feature_sha) != 64:
+            raise OfflineExperimentError(f"feature digest missing for {phrase}")
         records_by_partition[str(partition)].append(
             {
                 "phrase_key": phrase,
                 "partition": partition,
                 "split_group_id": split_group,
-                "feature_sha256": feature.get("feature_sha256"),
+                "feature_sha256": feature_sha,
                 "features": _validate_feature_vector(feature.get("features")),
                 "targets": normalized_set,
             }
