@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import copy
 import hashlib
-import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -58,8 +56,9 @@ class TavernNormalizationBuilderTests(unittest.TestCase):
     def _archive(self, root: Path, raw: bytes) -> tuple[Path, str, str]:
         member = "TAVERN-master/Beethoven/B063/Encodings/Encoder_B/B063_00_01_encoderB.krn"
         path = root / "tavern.zip"
+        info = zipfile.ZipInfo(member, date_time=(1980, 1, 1, 0, 0, 0))
         with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr(member, raw)
+            archive.writestr(info, raw)
         return path, member, hashlib.sha256(path.read_bytes()).hexdigest()
 
     def _realization(self, member: str, raw: bytes) -> dict[str, object]:
@@ -121,20 +120,27 @@ class TavernNormalizationBuilderTests(unittest.TestCase):
 
     def test_raw_hash_tamper_fails_closed(self) -> None:
         raw = b"**harm\n*C:\n4I\n*-\n"
+
         def mutate(data):
             data["records"][0]["selected_labels"][0]["raw_sha256"] = "b" * 64
+
         with self.assertRaises(TavernNormalizationAdapterError):
             self._build(raw, mutate=mutate)
 
     def test_upstream_training_authority_escalation_fails_closed(self) -> None:
         raw = b"**harm\n*C:\n4I\n*-\n"
         with self.assertRaises(TavernNormalizationAdapterError):
-            self._build(raw, mutate=lambda data: data.__setitem__("training_authorized", True))
+            self._build(
+                raw,
+                mutate=lambda data: data.__setitem__("training_authorized", True),
+            )
 
     def test_selected_source_must_agree_with_human_decision(self) -> None:
         raw = b"**harm\n*C:\n4I\n*-\n"
+
         def mutate(data):
             data["records"][0]["decision"] = "SELECT_A"
+
         with self.assertRaises(TavernNormalizationAdapterError):
             self._build(raw, mutate=mutate)
 
