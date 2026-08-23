@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections import Counter
 import hashlib
 import json
-from typing import Any
 
 from .tavern_reviewed_split import (
     EXPECTED_RECORD_DISTRIBUTION,
@@ -48,13 +47,19 @@ def deterministic_inner_partition(canonical_work_id: str, *, seed: str) -> str:
 
 def choose_train_inner_seed(
     canonical_work_ids: list[str],
+    *,
+    expected_family_count: int = EXPECTED_ORIGINAL_TRAIN_FAMILIES,
+    min_inner_train_families: int = MIN_INNER_TRAIN_FAMILIES,
+    min_inner_dev_families: int = MIN_INNER_DEV_FAMILIES,
 ) -> tuple[str, int, dict[str, int]]:
     if len(canonical_work_ids) != len(set(canonical_work_ids)):
         raise TrainInnerSplitError("inner split work IDs must be unique")
-    if len(canonical_work_ids) != EXPECTED_ORIGINAL_TRAIN_FAMILIES:
-        raise TrainInnerSplitError(
-            "inner split requires exactly the frozen original TRAIN work families"
-        )
+    if len(canonical_work_ids) != expected_family_count:
+        raise TrainInnerSplitError("inner split work-family count mismatch")
+    if min_inner_train_families < 1 or min_inner_dev_families < 1:
+        raise TrainInnerSplitError("inner split minimum family coverage must be positive")
+    if min_inner_train_families + min_inner_dev_families > expected_family_count:
+        raise TrainInnerSplitError("inner split minimum family coverage is impossible")
     for index in range(MAX_SEED_INDEX):
         seed = f"{INNER_SEED_PREFIX}:{index}"
         counts = Counter(
@@ -62,8 +67,8 @@ def choose_train_inner_seed(
             for work_id in canonical_work_ids
         )
         if (
-            counts["INNER_TRAIN"] >= MIN_INNER_TRAIN_FAMILIES
-            and counts["INNER_DEV"] >= MIN_INNER_DEV_FAMILIES
+            counts["INNER_TRAIN"] >= min_inner_train_families
+            and counts["INNER_DEV"] >= min_inner_dev_families
         ):
             return seed, index, {
                 "INNER_DEV": counts["INNER_DEV"],
@@ -82,8 +87,25 @@ def _canonical_sha256(value: object) -> str:
 def build_train_inner_split(
     reviewed_split: object,
     *,
+    expected_outer_seed: str = EXPECTED_SEED,
+    expected_outer_record_distribution: dict[str, int] | None = None,
+    expected_original_train_records: int = EXPECTED_ORIGINAL_TRAIN_RECORDS,
+    expected_original_train_families: int = EXPECTED_ORIGINAL_TRAIN_FAMILIES,
+    min_inner_train_families: int = MIN_INNER_TRAIN_FAMILIES,
+    min_inner_dev_families: int = MIN_INNER_DEV_FAMILIES,
+    expected_inner_seed: str | None = EXPECTED_INNER_SEED,
+    expected_inner_seed_index: int | None = EXPECTED_INNER_SEED_INDEX,
+    expected_inner_family_distribution: dict[str, int] | None = None,
+    expected_inner_record_distribution: dict[str, int] | None = None,
     expected_manifest_sha256: str | None = PINNED_INNER_SPLIT_MANIFEST_SHA256,
 ) -> dict[str, object]:
+    if expected_outer_record_distribution is None:
+        expected_outer_record_distribution = EXPECTED_RECORD_DISTRIBUTION
+    if expected_inner_family_distribution is None:
+        expected_inner_family_distribution = EXPECTED_INNER_FAMILY_DISTRIBUTION
+    if expected_inner_record_distribution is None:
+        expected_inner_record_distribution = EXPECTED_INNER_RECORD_DISTRIBUTION
+
     if not isinstance(reviewed_split, dict):
         raise TrainInnerSplitError("reviewed split must be an object")
     if reviewed_split.get("schema_version") != SPLIT_SCHEMA:
@@ -92,9 +114,9 @@ def build_train_inner_split(
         raise TrainInnerSplitError("reviewed split source subset mismatch")
     if reviewed_split.get("source_revision") != PINNED_TAVERN_REVISION:
         raise TrainInnerSplitError("reviewed split source revision mismatch")
-    if reviewed_split.get("seed") != EXPECTED_SEED:
+    if reviewed_split.get("seed") != expected_outer_seed:
         raise TrainInnerSplitError("outer split seed changed")
-    if reviewed_split.get("record_distribution") != EXPECTED_RECORD_DISTRIBUTION:
+    if reviewed_split.get("record_distribution") != expected_outer_record_distribution:
         raise TrainInnerSplitError("outer split record distribution changed")
     if reviewed_split.get("label_aware_seed_selection") is not False:
         raise TrainInnerSplitError("outer split must remain label-blind")
@@ -112,7 +134,7 @@ def build_train_inner_split(
     train_records = [
         item for item in source_records if item.get("partition") == "TRAIN"
     ]
-    if len(train_records) != EXPECTED_ORIGINAL_TRAIN_RECORDS:
+    if len(train_records) != expected_original_train_records:
         raise TrainInnerSplitError("original TRAIN record count changed")
     if any(
         item.get("partition") not in {"TRAIN", "VALIDATION", "CALIBRATION", "HOLDOUT"}
@@ -128,15 +150,20 @@ def build_train_inner_split(
             and item.get("canonical_work_id")
         }
     )
-    if len(canonical_work_ids) != EXPECTED_ORIGINAL_TRAIN_FAMILIES:
+    if len(canonical_work_ids) != expected_original_train_families:
         raise TrainInnerSplitError("original TRAIN work-family count changed")
 
     seed, seed_index, family_distribution = choose_train_inner_seed(
-        canonical_work_ids
+        canonical_work_ids,
+        expected_family_count=expected_original_train_families,
+        min_inner_train_families=min_inner_train_families,
+        min_inner_dev_families=min_inner_dev_families,
     )
-    if seed != EXPECTED_INNER_SEED or seed_index != EXPECTED_INNER_SEED_INDEX:
-        raise TrainInnerSplitError("identity-only inner seed search result changed")
-    if family_distribution != EXPECTED_INNER_FAMILY_DISTRIBUTION:
+    if expected_inner_seed is not None and seed != expected_inner_seed:
+        raise TrainInnerSplitError("identity-only inner seed changed")
+    if expected_inner_seed_index is not None and seed_index != expected_inner_seed_index:
+        raise TrainInnerSplitError("identity-only inner seed index changed")
+    if family_distribution != expected_inner_family_distribution:
         raise TrainInnerSplitError("inner work-family distribution changed")
 
     seen_phrases: set[str] = set()
@@ -191,9 +218,9 @@ def build_train_inner_split(
         "INNER_DEV": record_distribution["INNER_DEV"],
         "INNER_TRAIN": record_distribution["INNER_TRAIN"],
     }
-    if observed_record_distribution != EXPECTED_INNER_RECORD_DISTRIBUTION:
+    if observed_record_distribution != expected_inner_record_distribution:
         raise TrainInnerSplitError("inner record distribution changed")
-    if len(family_inner_partition) != EXPECTED_ORIGINAL_TRAIN_FAMILIES:
+    if len(family_inner_partition) != expected_original_train_families:
         raise TrainInnerSplitError("not all original TRAIN families were mapped")
 
     manifest_sha256 = _canonical_sha256(records)
@@ -207,7 +234,7 @@ def build_train_inner_split(
         "schema_version": INNER_SPLIT_SCHEMA,
         "source_corpus": "TAVERN_REVIEWED_694",
         "source_revision": PINNED_TAVERN_REVISION,
-        "outer_split_seed": EXPECTED_SEED,
+        "outer_split_seed": expected_outer_seed,
         "outer_partition_scope": "TRAIN_ONLY",
         "inner_seed": seed,
         "inner_seed_index": seed_index,
@@ -215,8 +242,8 @@ def build_train_inner_split(
             "LEXICOGRAPHIC_FIRST_IDENTITY_ONLY_MIN_FAMILY_COVERAGE"
         ),
         "label_aware_inner_seed_selection": False,
-        "original_train_record_count": EXPECTED_ORIGINAL_TRAIN_RECORDS,
-        "original_train_work_family_count": EXPECTED_ORIGINAL_TRAIN_FAMILIES,
+        "original_train_record_count": expected_original_train_records,
+        "original_train_work_family_count": expected_original_train_families,
         "inner_work_family_distribution": family_distribution,
         "inner_record_distribution": observed_record_distribution,
         "records": records,
