@@ -5,6 +5,7 @@ import unittest
 
 from st_harmonic_training.normalization import NORMALIZED_FIELDS
 from st_harmonic_training.offline_experiment import (
+    MODEL_TARGET_SET_POLICY,
     OfflineExperimentError,
     build_experiment_summary,
     build_private_experiment_shards,
@@ -120,6 +121,23 @@ class OfflineExperimentTests(unittest.TestCase):
         }
         return features, targets, split
 
+    def variant_targets(self):
+        label = self.label()
+        return [
+            {
+                "source": "A",
+                "raw_sha256": "c" * 64,
+                "normalized_st_label": copy.deepcopy(label),
+                "normalized_label_sha256": "d" * 64,
+            },
+            {
+                "source": "B",
+                "raw_sha256": "e" * 64,
+                "normalized_st_label": copy.deepcopy(label),
+                "normalized_label_sha256": "f" * 64,
+            },
+        ]
+
     def shards(self):
         features, targets, split = self.source_objects()
         return build_private_experiment_shards(
@@ -153,9 +171,57 @@ class OfflineExperimentTests(unittest.TestCase):
         self.assertFalse(result["calibration_accessed"])
         self.assertFalse(result["holdout_accessed"])
         self.assertFalse(result["production_authority"])
+        self.assertEqual(result["model_target_set_policy"], MODEL_TARGET_SET_POLICY)
         summary = build_experiment_summary(result)
         self.assertNotIn("model_checkpoint", summary)
         self.assertTrue(summary["model_checkpoint_external_only"])
+
+    def test_duplicate_normalized_train_variants_preserve_shard_slots_but_not_model_weight(self) -> None:
+        features, targets, split = self.source_objects()
+        targets["records"][0]["decision"] = "PRESERVE_VARIANTS"
+        targets["records"][0]["targets"] = self.variant_targets()
+        shards = build_private_experiment_shards(
+            features,
+            targets,
+            split,
+            self.entry(),
+            expected_partition_counts={"TRAIN": 1, "VALIDATION": 1},
+            expected_target_counts={"TRAIN": 2, "VALIDATION": 1},
+        )
+        self.assertEqual(shards["TRAIN"]["target_count"], 2)
+        self.assertEqual(len(shards["TRAIN"]["records"][0]["targets"]), 2)
+
+        result = run_offline_experiment(
+            shards["TRAIN"], shards["VALIDATION"], self.entry(), enforce_runtime=False
+        )
+        self.assertEqual(result["train_source_target_count"], 2)
+        self.assertEqual(result["train_effective_target_count"], 1)
+        self.assertEqual(result["model_target_set_policy"], MODEL_TARGET_SET_POLICY)
+        self.assertEqual(result["model_checkpoint"]["variant_training_example_count"], 0)
+        self.assertTrue(result["deterministic_rerun_match"])
+
+    def test_duplicate_normalized_validation_variants_use_set_semantics_for_exact_metric(self) -> None:
+        features, targets, split = self.source_objects()
+        targets["records"][1]["decision"] = "PRESERVE_VARIANTS"
+        targets["records"][1]["targets"] = self.variant_targets()
+        shards = build_private_experiment_shards(
+            features,
+            targets,
+            split,
+            self.entry(),
+            expected_partition_counts={"TRAIN": 1, "VALIDATION": 1},
+            expected_target_counts={"TRAIN": 1, "VALIDATION": 2},
+        )
+        result = run_offline_experiment(
+            shards["TRAIN"], shards["VALIDATION"], self.entry(), enforce_runtime=False
+        )
+        self.assertEqual(result["validation_source_target_count"], 2)
+        self.assertEqual(result["validation_effective_target_count"], 1)
+        self.assertEqual(result["validation_metrics"]["EXACT_NORMALIZED_LABEL_MATCH"], 1.0)
+        self.assertEqual(
+            result["validation_metrics"]["VARIANT_AWARE_ACCEPTABLE_SET_ACCURACY"],
+            1.0,
+        )
 
     def test_train_validation_split_group_overlap_fails_closed(self) -> None:
         features, targets, split = self.source_objects()

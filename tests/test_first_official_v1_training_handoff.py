@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -31,6 +33,18 @@ class FirstOfficialV1TrainingHandoffTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 _write_new(path, "replacement\n")
             self.assertEqual(path.read_text(encoding="utf-8"), "existing\n")
+
+    def test_direct_script_help_bootstraps_repository_imports(self) -> None:
+        script = _repo_root() / "scripts" / "run_first_official_v1_training.py"
+        completed = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("first official Stage 1-C v1 training", completed.stdout)
 
 
 if __name__ == "__main__":

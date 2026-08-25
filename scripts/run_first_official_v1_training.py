@@ -4,6 +4,14 @@ import argparse
 import json
 from pathlib import Path
 import stat
+import sys
+
+# Direct script execution sets sys.path[0] to scripts/. Bind imports to this
+# script's repository root so the documented one-command handoff works in a
+# fresh checkout without requiring an editable install first.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from st_harmonic_training.offline_experiment import (
     build_experiment_summary,
@@ -41,7 +49,7 @@ class FirstOfficialTrainingHandoffError(ValueError):
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return _REPO_ROOT
 
 
 def _assert_external_output_dir(path: Path) -> Path:

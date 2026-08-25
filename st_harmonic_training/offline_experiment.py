@@ -34,6 +34,7 @@ REAL_PARTITION_COUNTS = {"TRAIN": 487, "VALIDATION": 125}
 REAL_TARGET_COUNTS = {"TRAIN": 500, "VALIDATION": 154}
 ALLOWED_SHARD_PARTITIONS = frozenset(REAL_PARTITION_COUNTS)
 SEALED_PARTITIONS = ("CALIBRATION", "HOLDOUT")
+MODEL_TARGET_SET_POLICY = "CANONICAL_NORMALIZED_UNIQUE_SET"
 
 
 class OfflineExperimentError(ValueError):
@@ -66,6 +67,30 @@ def _validate_normalized_label(value: object) -> dict[str, object]:
         if item is not None and not isinstance(item, str):
             raise OfflineExperimentError("normalized target values must be text or null")
     return {field: value[field] for field in NORMALIZED_FIELDS}
+
+
+def _unique_normalized_targets(value: object, *, phrase: str) -> list[dict[str, object]]:
+    """Return canonical set-semantics for one model/evaluation target list.
+
+    Private shard target slots preserve reviewed A/B provenance and therefore may
+    contain two source slots that normalize to the same ST label. The model must
+    not double-weight that label, so duplicates collapse only at the model-use
+    boundary after the pinned shard has already been constructed/verified.
+    """
+    if not isinstance(value, list) or len(value) not in {1, 2}:
+        raise OfflineExperimentError(f"invalid model target set for {phrase}")
+    unique: list[dict[str, object]] = []
+    seen: set[bytes] = set()
+    for target in value:
+        normalized = _validate_normalized_label(target)
+        canonical = _canonical_bytes(normalized)
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        unique.append(normalized)
+    if not unique:
+        raise OfflineExperimentError(f"empty model target set for {phrase}")
+    return unique
 
 
 def _validate_feature_vector(value: object) -> dict[str, int]:
@@ -185,10 +210,10 @@ def build_private_experiment_shards(
             if not isinstance(target, dict):
                 raise OfflineExperimentError(f"malformed target for {phrase}")
             normalized_set.append(_validate_normalized_label(target.get("normalized_st_label")))
-        canonical_targets = {_canonical_bytes(target) for target in normalized_set}
-        if len(canonical_targets) != len(normalized_set):
-            raise OfflineExperimentError(f"duplicate acceptable target for {phrase}")
 
+        # Preserve reviewed source-target slots exactly in the private shard. Two
+        # distinct A/B provenance slots are allowed to normalize to one model label;
+        # canonical set semantics are applied only after pinned-shard verification.
         split_group = split.get("split_group_id")
         if not isinstance(split_group, str) or not split_group:
             raise OfflineExperimentError(f"missing split group for {phrase}")
@@ -288,11 +313,14 @@ def require_locked_runtime() -> None:
 def _record_to_fit_example(record: dict[str, Any]) -> dict[str, object]:
     if record.get("partition") != "TRAIN":
         raise OfflineExperimentError("fit example must come from TRAIN shard")
+    phrase = record.get("phrase_key")
+    if not isinstance(phrase, str) or not phrase:
+        raise OfflineExperimentError("fit example phrase key missing")
     return {
-        "phrase_key": record["phrase_key"],
+        "phrase_key": phrase,
         "partition": "TRAIN",
         "features": record["features"],
-        "targets": record["targets"],
+        "targets": _unique_normalized_targets(record.get("targets"), phrase=phrase),
     }
 
 
@@ -303,13 +331,16 @@ def _evaluate_validation(
     variant_aware = 0
     roman = 0
     functional = 0
+    effective_target_count = 0
     predictions: list[dict[str, object]] = []
     for record in validation_records:
         if record.get("partition") != "VALIDATION":
             raise OfflineExperimentError("evaluation may read VALIDATION only")
-        targets = record.get("targets")
-        if not isinstance(targets, list) or not targets:
-            raise OfflineExperimentError("validation target set missing")
+        phrase = record.get("phrase_key")
+        if not isinstance(phrase, str) or not phrase:
+            raise OfflineExperimentError("validation phrase key missing")
+        targets = _unique_normalized_targets(record.get("targets"), phrase=phrase)
+        effective_target_count += len(targets)
         prediction = predict_fieldwise_sparse_nb(model, record.get("features"))
         predicted_label = prediction["normalized_st_label"]
         if len(targets) == 1 and predicted_label == targets[0]:
@@ -322,7 +353,7 @@ def _evaluate_validation(
             functional += 1
         predictions.append(
             {
-                "phrase_key": record["phrase_key"],
+                "phrase_key": phrase,
                 "prediction": predicted_label,
                 "score_semantics": prediction["score_semantics"],
                 "authoritative_decision": False,
@@ -337,7 +368,11 @@ def _evaluate_validation(
         "ROMAN_NUMERAL_COMPONENT_ACCURACY": roman / denominator,
         "FUNCTIONAL_COMPONENT_ACCURACY": functional / denominator,
     }
-    return {"metrics": metrics, "predictions": predictions}
+    return {
+        "metrics": metrics,
+        "predictions": predictions,
+        "effective_target_count": effective_target_count,
+    }
 
 
 def run_offline_experiment(
@@ -359,6 +394,7 @@ def run_offline_experiment(
         raise OfflineExperimentError("TRAIN/VALIDATION split-group leakage detected")
 
     fit_examples = [_record_to_fit_example(item) for item in train["records"]]
+    train_effective_target_count = sum(len(item["targets"]) for item in fit_examples)
     model_first = fit_fieldwise_sparse_nb(fit_examples)
     model_second = fit_fieldwise_sparse_nb(list(reversed(fit_examples)))
     first_bytes = canonical_model_json(model_first).encode("utf-8")
@@ -392,6 +428,11 @@ def run_offline_experiment(
         "holdout_accessed": False,
         "train_record_count": train["record_count"],
         "validation_record_count": validation["record_count"],
+        "train_source_target_count": train.get("target_count"),
+        "validation_source_target_count": validation.get("target_count"),
+        "train_effective_target_count": train_effective_target_count,
+        "validation_effective_target_count": evaluation["effective_target_count"],
+        "model_target_set_policy": MODEL_TARGET_SET_POLICY,
         "model_checkpoint_sha256": checkpoint_sha,
         "deterministic_rerun_match": True,
         "validation_prediction_manifest_sha256": prediction_manifest_sha,
