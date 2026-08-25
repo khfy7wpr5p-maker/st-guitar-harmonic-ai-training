@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from copy import deepcopy
+import hashlib
+import json
 import unittest
 
 from st_harmonic_training.split import deterministic_partition
@@ -16,7 +17,6 @@ from st_harmonic_training.stage1e_internal_cv import (
     build_stage1e_group_plan,
     build_stage1e_group_plan_summary,
     build_stage1e_summary,
-    canonical_stage1e_json,
     expected_stage0_train_groups,
     materialize_stage1e_internal_cv,
 )
@@ -29,8 +29,6 @@ from st_harmonic_training.training_payload import PAYLOAD_SCHEMA
 
 
 class Stage1EInternalCVTests(unittest.TestCase):
-    SOURCE_DIGEST = "f" * 64
-
     def _groups_by_partition(self) -> dict[str, list[str]]:
         result: dict[str, list[str]] = {
             "TRAIN": [],
@@ -41,6 +39,13 @@ class Stage1EInternalCVTests(unittest.TestCase):
         for group in _active_canonical_work_ids():
             result[deterministic_partition(group, seed=EXPECTED_SEED).value].append(group)
         return result
+
+    @staticmethod
+    def _records_digest(records: list[dict[str, object]]) -> str:
+        raw = json.dumps(
+            records, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
 
     def _payload(self) -> dict[str, object]:
         groups = self._groups_by_partition()
@@ -62,11 +67,12 @@ class Stage1EInternalCVTests(unittest.TestCase):
                         }
                     )
         self.assertEqual(len(records), 694)
+        digest = self._records_digest(records)
         return {
             "schema_version": PAYLOAD_SCHEMA,
             "source_corpus": "TAVERN_REVIEWED_694",
             "source_revision": PINNED_TAVERN_REVISION,
-            "training_payload_manifest_sha256": self.SOURCE_DIGEST,
+            "training_payload_manifest_sha256": digest,
             "partition_distribution": dict(EXPECTED_RECORD_DISTRIBUTION),
             "augmentation_scope": "TRAIN_ONLY",
             "cross_corpus_alias_partition_inheritance_required": True,
@@ -75,6 +81,14 @@ class Stage1EInternalCVTests(unittest.TestCase):
             "calibration_labels_available_to_parameter_fitting": False,
             "records": records,
         }
+
+    def _materialize(self, payload: dict[str, object]) -> dict[str, object]:
+        return materialize_stage1e_internal_cv(
+            payload,
+            expected_source_payload_sha256=str(
+                payload["training_payload_manifest_sha256"]
+            ),
+        )
 
     def test_group_plan_is_pinned_label_blind_and_balanced(self) -> None:
         plan = build_stage1e_group_plan()
@@ -101,9 +115,7 @@ class Stage1EInternalCVTests(unittest.TestCase):
             self.assertEqual(deterministic_partition(group, seed=EXPECTED_SEED).value, "TRAIN")
 
     def test_private_materialization_uses_train_only(self) -> None:
-        result = materialize_stage1e_internal_cv(
-            self._payload(), expected_source_payload_sha256=self.SOURCE_DIGEST
-        )
+        result = self._materialize(self._payload())
         self.assertEqual(result["record_count"], EXPECTED_TRAIN_RECORD_COUNT)
         self.assertEqual(result["work_family_count"], EXPECTED_TRAIN_WORK_FAMILY_COUNT)
         self.assertEqual(len(result["records"]), EXPECTED_TRAIN_RECORD_COUNT)
@@ -121,9 +133,7 @@ class Stage1EInternalCVTests(unittest.TestCase):
         self.assertFalse(result["production_authority"])
 
     def test_materialization_is_identity_only(self) -> None:
-        result = materialize_stage1e_internal_cv(
-            self._payload(), expected_source_payload_sha256=self.SOURCE_DIGEST
-        )
+        result = self._materialize(self._payload())
         allowed = {
             "phrase_key",
             "canonical_work_id",
@@ -140,18 +150,17 @@ class Stage1EInternalCVTests(unittest.TestCase):
         validation_record = next(item for item in records if item["partition"] == "VALIDATION")
         validation_record["canonical_work_id"] = train_group
         validation_record["split_group_id"] = train_group
+        payload["training_payload_manifest_sha256"] = self._records_digest(records)
         with self.assertRaises(Stage1EInternalCVError):
-            materialize_stage1e_internal_cv(
-                payload, expected_source_payload_sha256=self.SOURCE_DIGEST
-            )
+            self._materialize(payload)
 
     def test_duplicate_phrase_fails_closed(self) -> None:
         payload = self._payload()
-        payload["records"][1]["phrase_key"] = payload["records"][0]["phrase_key"]
+        records = payload["records"]
+        records[1]["phrase_key"] = records[0]["phrase_key"]
+        payload["training_payload_manifest_sha256"] = self._records_digest(records)
         with self.assertRaises(Stage1EInternalCVError):
-            materialize_stage1e_internal_cv(
-                payload, expected_source_payload_sha256=self.SOURCE_DIGEST
-            )
+            self._materialize(payload)
 
     def test_source_authority_tamper_fails_closed(self) -> None:
         for field in (
@@ -162,26 +171,28 @@ class Stage1EInternalCVTests(unittest.TestCase):
             payload = self._payload()
             payload[field] = True
             with self.assertRaises(Stage1EInternalCVError):
-                materialize_stage1e_internal_cv(
-                    payload, expected_source_payload_sha256=self.SOURCE_DIGEST
-                )
+                self._materialize(payload)
 
-    def test_reordered_source_is_deterministic(self) -> None:
-        payload_a = self._payload()
-        payload_b = deepcopy(payload_a)
-        payload_b["records"] = list(reversed(payload_b["records"]))
-        result_a = materialize_stage1e_internal_cv(
-            payload_a, expected_source_payload_sha256=self.SOURCE_DIGEST
-        )
-        result_b = materialize_stage1e_internal_cv(
-            payload_b, expected_source_payload_sha256=self.SOURCE_DIGEST
-        )
-        self.assertEqual(canonical_stage1e_json(result_a), canonical_stage1e_json(result_b))
+    def test_record_body_tamper_cannot_reuse_claimed_digest(self) -> None:
+        payload = self._payload()
+        original_digest = payload["training_payload_manifest_sha256"]
+        payload["records"][0]["phrase_key"] = "tampered:0001"
+        self.assertEqual(payload["training_payload_manifest_sha256"], original_digest)
+        with self.assertRaisesRegex(
+            Stage1EInternalCVError, "record body digest mismatch"
+        ):
+            self._materialize(payload)
+
+    def test_reordered_source_cannot_reuse_pinned_digest(self) -> None:
+        payload = self._payload()
+        payload["records"] = list(reversed(payload["records"]))
+        with self.assertRaisesRegex(
+            Stage1EInternalCVError, "record body digest mismatch"
+        ):
+            self._materialize(payload)
 
     def test_summary_preserves_fail_closed_authority(self) -> None:
-        result = materialize_stage1e_internal_cv(
-            self._payload(), expected_source_payload_sha256=self.SOURCE_DIGEST
-        )
+        result = self._materialize(self._payload())
         summary = build_stage1e_summary(result)
         self.assertNotIn("records", summary)
         self.assertFalse(summary["training_authorized"])
