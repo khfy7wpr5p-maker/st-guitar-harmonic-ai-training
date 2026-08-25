@@ -8,25 +8,43 @@ Official execution requires exactly Python `3.12.8`. The runner fails closed on 
 
 ## Partition isolation
 
-The training process never receives the complete 694-label artifact. A separate local data-engineering step creates only two private shards:
+The training process never receives the complete 694-label artifact as a persistent training file. The private handoff reconstructs only two in-memory experiment shards:
 
-- TRAIN: 487 records / 500 acceptable targets; parameter fitting allowed.
-- VALIDATION: 125 records / 154 acceptable targets; evaluation/model-selection evidence only.
+- TRAIN: 487 records / 500 source-target slots; parameter fitting allowed.
+- VALIDATION: 125 records / 154 source-target slots; evaluation/model-selection evidence only.
 
 `CALIBRATION` and `HOLDOUT` are explicitly skipped and never serialized into these experiment shards. TRAIN and VALIDATION split-group IDs must be disjoint. Augmentation remains TRAIN-only.
 
-Private shard payloads contain derived features and normalized human-valid targets and are therefore **not repository artifacts**. They belong under ignored `/runs/` or another private external location. They must not be committed to this public repository.
+Private shard payloads contain derived features and normalized human-valid targets and are therefore **not repository artifacts**. They belong under ignored `/runs/` or another private external location when materialized by legacy tooling. They must not be committed to this public repository.
+
+## Provenance slots vs model target sets
+
+The pinned shard target counts preserve reviewed source provenance. A `PRESERVE_VARIANTS` record therefore retains both source A and source B slots even when deterministic normalization maps both sources to the same `NormalizedSTLabel`.
+
+The model and validation metrics consume acceptable targets as a mathematical set, not a multiset. After private-shard construction and, for the official run, exact pinned-shard verification, normalized labels are canonicalized and duplicate labels collapse under policy:
+
+`CANONICAL_NORMALIZED_UNIQUE_SET`
+
+This boundary rule has three consequences:
+
+1. source/provenance slots and their pinned shard digests remain unchanged;
+2. canonically identical A/B labels cannot double-weight one model class;
+3. genuinely distinct normalized variants remain distinct and keep equal per-example weighting.
+
+The experiment summary reports source-target counts separately from effective model-target counts so any collapse remains auditable without publishing target bodies.
 
 ## Experiment behavior
 
 The runner:
 1. verifies the Stage 1-B final PASS and frozen source/manifests;
-2. fits the model on TRAIN only;
-3. repeats the fit in reversed record order and requires byte-identical canonical checkpoint output;
-4. evaluates on VALIDATION only;
-5. compares results to the already-frozen Stage 1-A thresholds;
-6. writes the model checkpoint only as an external/private artifact;
-7. emits a summary containing metrics and digests, not the checkpoint or target bodies.
+2. verifies/constructs the sealed TRAIN and VALIDATION shards while keeping CALIBRATION/HOLDOUT closed;
+3. projects source-target slots to canonical unique normalized target sets at the model boundary;
+4. fits the model on TRAIN only;
+5. repeats the fit in reversed record order and requires byte-identical canonical checkpoint output;
+6. evaluates on VALIDATION only using the same target-set semantics;
+7. compares results to the already-frozen Stage 1-A thresholds;
+8. writes the model checkpoint only as an external/private artifact;
+9. emits a summary containing metrics, counts, and digests, not the checkpoint or target bodies.
 
 Frozen validation thresholds are not changed after observing the run:
 - exact normalized-label match >= `0.10`
@@ -44,4 +62,4 @@ Even a validation PASS grants at most the already-defined `OFFLINE_SHADOW_ONLY` 
 
 ## Execution handoff
 
-Repository CI already uses Python `3.12.8`, but this repository is public. Human-adjudicated TRAIN/VALIDATION target bodies must not be published merely to make GitHub Actions training convenient. Therefore the official run requires a **private execution handoff** that supplies the locally generated TRAIN/VALIDATION shards to a locked Python 3.12.8 environment without committing them.
+Repository CI uses the locked Python contract but this repository is public. Human-adjudicated TRAIN/VALIDATION target bodies must not be published merely to make GitHub Actions training convenient. Therefore the official run requires a **private execution handoff** that supplies or reconstructs the required private inputs in a locked Python 3.12.8 environment without committing them.
