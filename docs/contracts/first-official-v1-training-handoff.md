@@ -1,6 +1,6 @@
 # First official v1 training — private execution handoff
 
-Status: **READY FOR PRIVATE INPUTS / TRAINING NOT YET RUN**.
+Status: **READY FOR PRIVATE INPUTS / TRAINING NOT YET ACCEPTED**.
 
 This handoff executes the already-authorized Stage 1-B5 / Stage 1-C whole-phrase v1 offline experiment. It does not authorize event-level v2 training, CALIBRATION, HOLDOUT, or production use.
 
@@ -33,6 +33,17 @@ python scripts/run_first_official_v1_training.py \
   /private/st-guitar-harmony-v1-run
 ```
 
+Module invocation is also supported:
+
+```bash
+python -m scripts.run_first_official_v1_training \
+  /private/TAVERN_Stage0M_Validated_Human_Decisions_694_v1.json \
+  /private/TAVERN-pinned.zip \
+  /private/st-guitar-harmony-v1-run
+```
+
+The direct script entrypoint explicitly binds imports to its own repository root, so a fresh checkout does not require an editable install merely to resolve `st_harmonic_training`.
+
 The command performs, in memory:
 
 1. validated-decision SHA/schema/source/human-review checks;
@@ -43,18 +54,25 @@ The command performs, in memory:
 6. deterministic label-blind `**kern` feature extraction;
 7. TRAIN/VALIDATION private shard construction;
 8. exact official private-shard digest verification;
-9. TRAIN-only model fitting;
-10. reverse-order refit and byte-identical checkpoint reproducibility check;
-11. frozen VALIDATION evaluation.
+9. canonical normalized acceptable-target set projection at the model boundary;
+10. TRAIN-only model fitting;
+11. reverse-order refit and byte-identical checkpoint reproducibility check;
+12. frozen VALIDATION evaluation.
 
 Intermediate target bodies, feature bodies, and TRAIN/VALIDATION shards are not written to disk by this command.
 
 ## Pinned private shard gate
 
-Before fitting, the in-memory shards must exactly match:
+Before fitting, the in-memory source/provenance shards must exactly match:
 
-- TRAIN: 487 records / 500 acceptable targets / SHA-256 `d70c99ab3b2823946c893cf7b0e085a6300074244700f136fe346b3f320377e9`
-- VALIDATION: 125 records / 154 acceptable targets / SHA-256 `2201327a49cf8095829c61a0b98ef07f5384c281d6c6f4ef0d14030a5d4d9dc5`
+- TRAIN: 487 records / 500 source-target slots / SHA-256 `d70c99ab3b2823946c893cf7b0e085a6300074244700f136fe346b3f320377e9`
+- VALIDATION: 125 records / 154 source-target slots / SHA-256 `2201327a49cf8095829c61a0b98ef07f5384c281d6c6f4ef0d14030a5d4d9dc5`
+
+These target counts are provenance-preserving source slots, not a promise that all normalized labels are distinct. A reviewed `PRESERVE_VARIANTS` record may retain both A and B source slots even when deterministic normalization maps them to the same `NormalizedSTLabel`.
+
+After the pinned shard has been verified, model fitting and validation metrics apply `CANONICAL_NORMALIZED_UNIQUE_SET` semantics: canonically identical normalized labels collapse to one acceptable target for model use. This prevents duplicate source provenance from double-weighting one model class while leaving the pinned private shard bytes, source counts, and A/B evidence unchanged. Distinct normalized variants remain distinct and retain equal per-example weighting.
+
+The experiment summary reports both source-target counts and effective model-target counts so any collapse remains auditable without exposing private target bodies.
 
 CALIBRATION and HOLDOUT are never serialized into the experiment shards and remain sealed.
 
@@ -63,7 +81,7 @@ CALIBRATION and HOLDOUT are never serialized into the experiment shards and rema
 Only the following files are written, and the output directory is required to be outside the Git repository:
 
 - `model-checkpoint.private.json` — private; never commit;
-- `experiment-summary.json` — metrics/digests only; review before any evidence commit.
+- `experiment-summary.json` — metrics/digests/counts only; review before any evidence commit.
 
 Existing output files are never overwritten.
 
