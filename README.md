@@ -10,10 +10,20 @@ AI output is never authoritative, never bypasses the deterministic resolver, and
 
 ## Current stage
 
-Stage 0-A through Stage 0-H infrastructure is implemented. The real-data Stage 0-H gate remains **HOLD** because no external corpus has yet been admitted with verified immutable provenance/hashes/licenses and no leakage-safe teacher-gold sample manifest exists yet.
+The repository has progressed through the TAVERN real-data readiness path and the first bounded offline-model infrastructure:
 
-**Real model training is not authorized.** CI asserts this fail-closed state and will fail if training becomes authorized without an explicit promotion change.
+- Stage 0-Q through 0-X: reviewed TAVERN teacher-gold provenance, lineage-safe split, deterministic normalization, and dataset-readiness closure.
+- Stage 1-A: bounded training contract and frozen offline-shadow promotion thresholds.
+- Stage 1-B1 through 1-B5: hash-bound score inputs, deterministic label-blind features, leakage-safe payload, deterministic model implementation, and final offline-training entry PASS.
+- Stage 1-C: sealed offline experiment runner for TRAIN/VALIDATION-only execution. CALIBRATION and HOLDOUT remain excluded from fitting/model selection.
+- Stage 1-D: source-derived event-alignment audit. Joined labels remain non-authoritative; 557 reviewed records are event-alignment candidates and 137 remain quarantined for event-level materialization.
+
+The Stage 1-B5 PASS authorizes only the already-bounded **v1 offline experiment** scope. It does not grant production authority. Stage 1-D does **not** authorize event-level target materialization or event-level model training.
+
+The next safe architecture step is **Stage 1-E — TRAIN-only internal development split/CV**. It must derive only from the existing TRAIN work families and keep the original VALIDATION, CALIBRATION, and HOLDOUT partitions outside iterative event-level model development.
+
+See [`docs/architecture-status.md`](docs/architecture-status.md) for the current architecture map and [`docs/contracts/stage1e-train-only-development-split.md`](docs/contracts/stage1e-train-only-development-split.md) for the planned Stage 1-E boundary.
 
 ## Repository rule
 
-Do not commit raw corpora, archives, extracted data, checkpoints, model binaries, or run artifacts. Git stores manifests, immutable source revisions, hashes, license metadata, split metadata, transformation provenance, code, tests, and audit reports only.
+Do not commit raw corpora, archives, extracted data, private target bodies, checkpoints, model binaries, or run artifacts. Git stores manifests, immutable source revisions, hashes, license metadata, split metadata, transformation provenance, code, tests, architecture contracts, and audit reports only.
