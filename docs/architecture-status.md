@@ -29,6 +29,7 @@ A learned model never becomes the authoritative harmonic resolver, never mutates
 | Stage 1-B5 | final offline-training entry gate PASS | v1 `OFFLINE_EXPERIMENT_ONLY` training scope allowed |
 | Stage 1-C | sealed TRAIN/VALIDATION-only experiment runner | CALIBRATION/HOLDOUT remain sealed |
 | Stage 1-D | source-derived event-alignment audit | event-level targets/training remain unauthorized |
+| Stage 1-E | deterministic 3-fold TRAIN-only group plan implemented; private 487-record materialization pending | no original VALIDATION/CALIBRATION/HOLDOUT access; no event-level training authority |
 
 ## Stage 1-D evidence boundary
 
@@ -46,52 +47,59 @@ Observed pinned results:
 - 137 records remain quarantined for event-level materialization;
 - 6,534 harmonic event paths are represented by admitted alignment candidates.
 
-Therefore Joined files may carry source-derived event alignment evidence, but their embedded harmonic labels may not replace the human-selected Encoder targets.
+Joined files may carry source-derived event alignment evidence, but their embedded harmonic labels may not replace the human-selected Encoder targets.
 
-## Current gate boundaries
+## Stage 1-E current boundary
+
+Stage 1-E now has a deterministic repository-safe work-family plan over the exact 18 Stage 0-T TRAIN families:
+
+- development seed: `st-stage1e-grouped-cv-v1`
+- folds: 3
+- work-family distribution: 6 / 6 / 6
+- assignment policy: `SHA256_RANK_ROUND_ROBIN_IDENTITY_ONLY`
+- group-plan SHA-256: `ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c`
+- label-aware assignment: false
+
+The implementation also contains a fail-closed materializer for the private Stage 1-B payload. It emits only TRAIN identity/fold rows and rejects source partition drift, group leakage, duplicate phrase identities, HOLDOUT/CALIBRATION access escalation, and non-TRAIN families.
+
+The public repository intentionally does not contain the private full 694-record training payload. Therefore the final 487-record fold materialization summary is still `PENDING_PRIVATE_PAYLOAD`.
+
+This is the current execution boundary:
+
+`Stage 1-E group plan + materializer implementation`
+→ **private Stage 1-B payload handoff required for real 487-record fold materialization**
+→ Stage 1-F event-target materialization contract
+
+## Scope separation
 
 Two scopes must not be conflated:
 
 1. **v1 whole-phrase offline experiment** — Stage 1-B5 permits only the sealed `OFFLINE_EXPERIMENT_ONLY` scope implemented by Stage 1-C. This is not production authority.
-2. **future event-level v2 development** — Stage 1-D leaves event-target materialization and event-level model training unauthorized.
+2. **future event-level v2 development** — Stage 1-D/1-E do not authorize event-target materialization or event-level model training.
 
-The original VALIDATION partition has already been observed diagnostically during model development. Repeated representation/model iteration against that frozen partition would weaken its value as an independent model-selection check. Event-level development must therefore establish a separate development loop using TRAIN only.
+Original VALIDATION, CALIBRATION, HOLDOUT, and Stage 1-D quarantine remain outside the Stage 1-E iterative development loop.
 
-## Next safe stage
+## Next safe work
 
-### Stage 1-E — TRAIN-only internal development split/CV
+The next evidence-backed operation is private Stage 1-E record materialization using the hash-pinned Stage 1-B full payload. The repository command is:
 
-Status: **PLANNED / NOT IMPLEMENTED**.
+`python scripts/materialize_stage1e_internal_cv.py <private-training-payload.json> --summary-only`
 
-Stage 1-E must:
+The complete assignment should remain private; only the bounded summary may be reviewed for commit.
 
-- derive exclusively from the existing TRAIN partition: 487 records across 18 work families;
-- group by work-family / direct-lineage identity, never by independent record-level random splitting;
-- keep direct-lineage aliases in the same internal group;
-- keep augmentation TRAIN-internal only and attached to its source group;
-- produce a deterministic, reproducible assignment manifest with pinned digests;
-- permit no original VALIDATION, CALIBRATION, or HOLDOUT access during iterative event-level representation/model work;
-- authorize no event-target materialization by itself;
-- authorize no production integration or engine mutation.
+After that gate, the planned continuation is:
 
-The implementation contract is documented in [`contracts/stage1e-train-only-development-split.md`](contracts/stage1e-train-only-development-split.md).
-
-## Planned continuation after Stage 1-E
-
-The safe continuation is expected to be:
-
-`Stage 1-E TRAIN-only internal development split/CV`
-→ `Stage 1-F separately reviewed event-target materialization`
+`Stage 1-F separately reviewed event-target materialization`
 → `event-level representation/model v2 experimentation inside TRAIN-only development loop`
 → `frozen VALIDATION check`
 → `separately authorized CALIBRATION`
 → `one-way final HOLDOUT evaluation`
 → `bounded integration review for st-guitar-harmonic-engine`
 
-Later stage names are architectural planning labels, not implementation or promotion authorization.
+Later stage names remain architectural planning labels until separate CI-reviewed contracts authorize them.
 
 ## Repository security and artifact boundary
 
-Raw corpora, archives, extracted private data, human target bodies, model checkpoints/binaries, and run artifacts remain outside Git. The repository contains only code, tests, contracts, manifests, hashes, immutable source revisions, split metadata, license/provenance records, transformation evidence, and bounded audit summaries.
+Raw corpora, archives, extracted private data, human target bodies, full private training payloads, model checkpoints/binaries, and run artifacts remain outside Git. The repository contains only code, tests, contracts, manifests, hashes, immutable source revisions, split metadata, license/provenance records, transformation evidence, and bounded audit summaries.
 
 Production authority remains outside this training repository and must continue to belong to the deterministic resolver/policy boundary of `st-guitar-harmonic-engine`.
