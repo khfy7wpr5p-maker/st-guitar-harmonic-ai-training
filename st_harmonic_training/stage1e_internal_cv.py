@@ -139,6 +139,8 @@ def _validate_source_payload(
         raise Stage1EInternalCVError("training payload records malformed")
     if len(records) != sum(EXPECTED_RECORD_DISTRIBUTION.values()):
         raise Stage1EInternalCVError("training payload record count changed")
+    if _canonical_sha256(records) != expected_source_payload_sha256:
+        raise Stage1EInternalCVError("training payload record body digest mismatch")
     return records
 
 
