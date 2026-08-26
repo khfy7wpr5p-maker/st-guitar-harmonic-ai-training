@@ -1,0 +1,42 @@
+{
+  "archive_sha256": "b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63",
+  "calibrated_probability_output": false,
+  "calibration_target_access": false,
+  "candidate_alphas": [
+    0.25,
+    0.5,
+    1.0,
+    2.0,
+    4.0
+  ],
+  "deterministic_resolver_remains_authoritative": true,
+  "development_model_fitting_authorized": true,
+  "evaluation_scope": "STAGE0_T_TRAIN_HELD_OUT_INTERNAL_FOLD_ONLY",
+  "event_level_training_authorized": false,
+  "feature_occurrence_count": 94065,
+  "feature_vocabulary_count": 5265,
+  "fit_scope": "STAGE0_T_TRAIN_INTERNAL_FOLDS_ONLY",
+  "fold_count": 3,
+  "full_train_final_fit_authorized": false,
+  "group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "holdout_target_access": false,
+  "model_implementation_version": "specialist-multinomial-nb-v1",
+  "original_validation_target_access": false,
+  "production_authority": false,
+  "record_count": 487,
+  "schema_version": "st-stage2c-specialist-grouped-cv-contract-v1",
+  "selection_metric": "GROUPED_CV_ACCEPTABLE_SET_ACCURACY",
+  "selection_policy": "MAX_POOLED_ACCURACY_THEN_LOWEST_ALPHA",
+  "source_corpus": "TAVERN_REVIEWED_694",
+  "source_revision": "7cc65dc5365603a92376af50ac71491bea7a16ae",
+  "source_stage2b_schema": "st-stage2b-specialist-train-materialization-v1",
+  "source_target_slot_count": 500,
+  "specialists": [
+    "ROMAN_NUMERAL_SPECIALIST",
+    "KEY_SPECIALIST",
+    "FUNCTION_SPECIALIST"
+  ],
+  "stage2b_private_record_manifest_sha256": "cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd",
+  "validated_human_decisions_sha256": "0e53133bf150a101f1b55329c4c5741168fbe7b9ac9a748f221ec07fade1be4a",
+  "work_family_count": 18
+}
