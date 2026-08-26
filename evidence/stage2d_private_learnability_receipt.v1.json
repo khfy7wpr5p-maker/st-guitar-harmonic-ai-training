@@ -1,0 +1,57 @@
+{
+  "audit_scope": "STAGE0_T_TRAIN_TARGETS_ONLY",
+  "calibration_target_access": false,
+  "deterministic_resolver_remains_authoritative": true,
+  "event_level_training_authorized": false,
+  "exact_summary_file_sha256_bound": false,
+  "fold_count": 3,
+  "full_train_final_fit_started": false,
+  "group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "holdout_target_access": false,
+  "model_fitting_started": false,
+  "model_selection_started": false,
+  "original_validation_target_access": false,
+  "production_authority": false,
+  "receipt_basis": "OPERATOR_PROVIDED_SUMMARY_VALUES",
+  "record_count": 487,
+  "result_scope": "TRAIN_ONLY_TARGET_LEARNABILITY_DIAGNOSTIC",
+  "schema_version": "st-stage2d-private-learnability-receipt-v1",
+  "source_stage2b_private_record_manifest_sha256": "cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd",
+  "specialists": {
+    "FUNCTION_SPECIALIST": {
+      "eligible_record_count": 478,
+      "missing_record_count": 9,
+      "pooled_closed_set_oracle_ceiling": 0.734309623431,
+      "pooled_unseen_target_occurrence_rate": 0.271784232365,
+      "sequence_length_max": 56,
+      "sequence_length_mean": 4.910788381743,
+      "singleton_target_fraction": 0.564356435644,
+      "target_reuse_factor": 4.772277227723,
+      "unique_target_count": 101
+    },
+    "KEY_SPECIALIST": {
+      "eligible_record_count": 461,
+      "missing_record_count": 26,
+      "pooled_closed_set_oracle_ceiling": 0.984815618221,
+      "pooled_unseen_target_occurrence_rate": 0.015184381779,
+      "sequence_length_max": 1,
+      "sequence_length_mean": 1.0,
+      "singleton_target_fraction": 0.083333333333,
+      "target_reuse_factor": 38.416666666667,
+      "unique_target_count": 12
+    },
+    "ROMAN_NUMERAL_SPECIALIST": {
+      "eligible_record_count": 487,
+      "missing_record_count": 0,
+      "pooled_closed_set_oracle_ceiling": 0.0,
+      "pooled_unseen_target_occurrence_rate": 1.0,
+      "sequence_length_max": 65,
+      "sequence_length_mean": 11.012096774194,
+      "singleton_target_fraction": 0.909722222222,
+      "target_reuse_factor": 1.148148148148,
+      "unique_target_count": 432
+    }
+  },
+  "target_values_serialized": false,
+  "work_family_count": 18
+}
