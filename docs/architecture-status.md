@@ -33,7 +33,8 @@ A learned model never becomes the authoritative harmonic resolver, never mutates
 | Stage 2-A | first specialist wave frozen to Roman Numeral, Key, and Function | specialist architecture fixed; no automatic authority |
 | Stage 2-B | exact private TRAIN-only specialist payload materialized: 487 records / 18 families / 3 folds | original VALIDATION/CALIBRATION/HOLDOUT remain outside iterative development |
 | Stage 2-C | three independent specialist NB baselines evaluated by TRAIN-only grouped CV | Key shows learning signal; Function shows no gain over majority; Roman Numeral is zero; no promotion authority |
-| Stage 2-D | TRAIN-only target-learnability audit implementation added; private audit pending | diagnose target-space sparsity before changing model/representation; no model fitting or non-TRAIN access |
+| Stage 2-D | private TRAIN-only target-learnability audit completed | Key target is structurally learnable; Function is partially sparse; Roman whole-phrase class target has zero closed-set ceiling |
+| Stage 2-E | specialist target reformulation contract freezes separate Key / Function / Roman paths | target reformulation only; no model fitting or event-target authority |
 
 ## Stage 1-C first official v1 run
 
@@ -141,81 +142,102 @@ The operator-provided private CV summary reports deterministic reproduction and 
 | Key | 0.25 | 0.520607 | 0.143167 | +0.377440 |
 | Function | 2.0 | 0.202929 | 0.202929 | 0.000000 |
 
-Interpretation is intentionally bounded:
+Interpretation remains bounded:
 
 - Key has a clear TRAIN-internal learning signal above the fit-side majority baseline.
 - Function provides no pooled gain over the majority baseline with the current phrase-level target and bag-of-words NB baseline.
-- Roman Numeral obtains zero closed-set grouped-CV accuracy, and even its majority baseline is zero. This strongly motivates a target learnability audit before changing model capacity.
+- Roman Numeral obtains zero closed-set grouped-CV accuracy and zero majority baseline.
 
-The reported run kept:
+The reported run kept original VALIDATION, CALIBRATION, HOLDOUT, final full-TRAIN fit, event-level training, probability claims, and production authority closed.
 
-- `original_validation_target_access=false`;
-- `calibration_target_access=false`;
-- `holdout_target_access=false`;
-- `full_train_final_fit_started=false`;
-- `event_level_training_authorized=false`;
-- `production_authority=false`;
-- `calibrated_probability_output=false`;
-- `deterministic_rerun_match=true`.
+## Stage 2-D observed target learnability
 
-`evidence/stage2c_private_cv_receipt.v1.json` records only bounded operator-provided summary values. It explicitly does not claim the exact `stage2c-cv-summary.json` file SHA-256 is bound.
+The current TAVERN normalization adapter materializes Roman Numeral and Function as whole-phrase JSON sequence strings. Stage 2-D measured whether those complete sequence strings are reusable across the existing TRAIN work-family folds.
 
-## Stage 2-D target-learnability boundary
+The operator-provided private audit summary reports:
 
-The current TAVERN normalization adapter materializes Roman Numeral and Function as **whole-phrase JSON sequence strings**. A sequence such as a phrase's full harmonic path therefore becomes one closed-set class under the Stage 2-C baseline. If most complete sequences occur in only one work family/fold, a closed-set classifier cannot predict them in a held-out work family regardless of model capacity.
+| Specialist | Unique targets | Singleton fraction | Target reuse | Pooled unseen rate | Closed-set oracle ceiling |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Key | 12 | 0.083333 | 38.416667 | 0.015184 | 0.984816 |
+| Function | 101 | 0.564356 | 4.772277 | 0.271784 | 0.734310 |
+| Roman Numeral | 432 | 0.909722 | 1.148148 | 1.000000 | 0.000000 |
 
-Stage 2-D tests that hypothesis using only the exact Stage 2-B TRAIN payload. For each specialist it measures:
+Sequence-length observations are also structurally different:
 
-- unique target count and unique-target-per-record ratio;
-- singleton target count/fraction;
-- target reuse factor;
-- target presence across 1, 2, or all 3 folds;
-- per-fold fit/evaluation target overlap;
-- unseen held-out target occurrence rate;
-- records with no acceptable target observed in the fit folds;
-- closed-set oracle ceiling;
-- privacy-safe sequence-length statistics for Roman Numeral and Function.
+- Key is scalar: mean/max = 1 / 1;
+- Function sequence mean/max = 4.91 / 56;
+- Roman sequence mean/max = 11.01 / 65.
 
-The audit writes no target values. It only parses Roman/Function canonical JSON arrays to count their lengths.
+This explains the Stage 2-C Roman result: every held-out Roman whole-phrase target occurrence is unseen in the fit folds, so the closed-set oracle ceiling is exactly zero. Increasing closed-set model capacity cannot fix that target formulation.
 
-Stage 2-D authorizes **no model work**. All of these remain false:
+Function is less extreme but still has substantial whole-sequence sparsity and unseen held-out targets. Key has a healthy scalar target space and remains suitable for controlled classification research.
+
+`evidence/stage2d_private_learnability_receipt.v1.json` stores bounded aggregate values only. It does not claim the exact private `stage2d-learnability-summary.json` file SHA-256 is bound.
+
+## Stage 2-E specialist target reformulation
+
+Stage 2-E freezes separate target decisions before any new fitting:
+
+### Key
+
+- current target: scalar `key` class;
+- decision: `PRESERVE_SCALAR_TARGET`;
+- next work requires a separate TRAIN-only model/feature gate;
+- Stage 2-E itself authorizes no fit.
+
+### Function
+
+- current target: whole-phrase JSON function sequence treated as one class;
+- decision: `RETIRE_WHOLE_PHRASE_CLASSIFICATION_TARGET`;
+- intended replacement: aligned Function event/token sequence;
+- prerequisite: `FUNCTION_EVENT_CARRIER_ALIGNMENT_AUDIT_REQUIRED`.
+
+No authoritative Function event carrier alignment is currently proven, so no Function event target may be materialized yet.
+
+### Roman Numeral
+
+- current target: whole-phrase JSON Roman sequence treated as one class;
+- decision: `RETIRE_WHOLE_PHRASE_CLASSIFICATION_TARGET`;
+- intended replacement: aligned harmonic event sequence;
+- Stage 1-D event-alignment rows remain candidates, not target authority;
+- prerequisite: private TRAIN-only Stage 1-E event materialization plus a later Stage 1-F contract.
+
+Stage 1-D quarantined rows remain excluded. Stage 2-E does not reopen them.
+
+All Stage 2-E authority switches remain false:
 
 - model fitting;
 - model selection;
-- full-TRAIN final fitting;
+- final full-TRAIN fitting;
+- event-target materialization;
+- event-level training;
 - original VALIDATION target access;
 - CALIBRATION target access;
 - HOLDOUT target access;
-- event-level training authority;
-- production authority.
+- production authority;
+- calibrated probability output.
 
-The deterministic engine resolver remains authoritative.
+The deterministic `st-guitar-harmonic-engine` resolver remains authoritative.
 
 ## Scope separation
 
 Three scopes must not be conflated:
 
 1. **whole-phrase v1 experiment** — completed deterministically but HOLD on original VALIDATION; no promotion allowed.
-2. **future event-level v2 development** — Stage 1-D/1-E groundwork exists, but event-target materialization/training remains unauthorized.
-3. **specialist decomposition track** — Stage 2-B private TRAIN-only data is complete; Stage 2-C produced TRAIN-only diagnostic results; Stage 2-D diagnoses target learnability without fitting a model.
+2. **event-level development** — Stage 1-D/1-E groundwork exists, but authoritative event-target materialization/training remains unauthorized.
+3. **specialist decomposition track** — Stage 2-B data is complete, Stage 2-C produced TRAIN-only diagnostics, Stage 2-D diagnosed target learnability, and Stage 2-E now freezes target reformulation before further model work.
 
 Original VALIDATION, CALIBRATION, HOLDOUT, and Stage 1-D quarantine remain outside iterative specialist development.
 
 ## Next safe work
 
-After Stage 2-D code/CI merge, run the private target-learnability audit under Python 3.12.8:
+Stage 2-E splits the next work into three independent gates:
 
-`python -m scripts.run_stage2d_target_learnability_audit <specialist-train.private.json> <external-output-dir>`
+1. **Key:** define a TRAIN-only model/feature improvement gate while preserving scalar targets.
+2. **Function:** audit Function event-carrier alignment on TRAIN only; do not materialize event targets yet.
+3. **Roman Numeral:** complete the private TRAIN-only Stage 1-E event materialization prerequisite, then define Stage 1-F before any event-target training.
 
-Review only `stage2d-learnability-summary.json`.
-
-The result determines the next specialist architecture choice:
-
-- high unseen/singleton rates or a low closed-set oracle ceiling → redesign Roman/Function target representation before increasing model capacity;
-- adequate target reuse/ceiling but weak Stage 2-C accuracy → improve label-blind features and/or model family;
-- healthy learnability → preserve the target formulation and continue controlled specialist development.
-
-Original VALIDATION must remain untouched during that choice. No full-TRAIN final specialist fit is authorized yet.
+No new model run is authorized by Stage 2-E itself.
 
 For the v1 evidence chain, the exact private `experiment-summary.json` should eventually be hash-bound before the observed HOLD is treated as a final repository evidence receipt.
 
