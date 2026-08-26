@@ -1,6 +1,6 @@
 # Current architecture status
 
-This document is the current-state index for `st-guitar-harmonic-ai-training`. Historical stage contracts remain immutable evidence of the gate state that existed when each stage was introduced; when a historical document says an earlier gate is HOLD, use this file plus later completion contracts to determine the current architecture state.
+This document is the current-state index for `st-guitar-harmonic-ai-training`. Historical stage contracts remain immutable evidence of the gate state that existed when each stage was introduced; use this file plus later completion contracts to determine current authority.
 
 ## Authority model
 
@@ -27,36 +27,37 @@ A learned model never becomes the authoritative harmonic resolver, never mutates
 | Stage 1-B3 | leakage-safe 694-record training payload manifest | HOLDOUT/CALIBRATION fitting access forbidden |
 | Stage 1-B4 | deterministic dependency-free `fieldwise-multinomial-nb-v1` implementation | model implementation blocker closed |
 | Stage 1-B5 | final offline-training entry gate PASS | v1 `OFFLINE_EXPERIMENT_ONLY` training scope allowed |
-| Stage 1-C | sealed TRAIN/VALIDATION-only runner completed the first official private fit; validation result observed as HOLD | failed v1 checkpoint cannot be promoted; CALIBRATION/HOLDOUT remain sealed |
+| Stage 1-C | first official private whole-phrase fit completed; original VALIDATION result observed as HOLD | failed v1 checkpoint cannot be promoted; CALIBRATION/HOLDOUT remain sealed |
 | Stage 1-D | source-derived event-alignment audit | event-level targets/training remain unauthorized |
 | Stage 1-E | deterministic 3-fold TRAIN-only group plan implemented; event-level private materialization remains pending | no original VALIDATION/CALIBRATION/HOLDOUT access; no event-level training authority |
-| Stage 2-A | first specialist wave frozen to Roman Numeral, Key, and Function; unsupported targets deferred | specialist architecture fixed; no automatic authority |
+| Stage 2-A | first specialist wave frozen to Roman Numeral, Key, and Function | specialist architecture fixed; no automatic authority |
 | Stage 2-B | exact private TRAIN-only specialist payload materialized: 487 records / 18 families / 3 folds | original VALIDATION/CALIBRATION/HOLDOUT remain outside iterative development |
-| Stage 2-C | TRAIN-only grouped-CV development contract + runner implemented for three independent specialist NB baselines | internal development fitting only; no full-TRAIN final fit, promotion, calibration, HOLDOUT, or production authority |
+| Stage 2-C | three independent specialist NB baselines evaluated by TRAIN-only grouped CV | Key shows learning signal; Function shows no gain over majority; Roman Numeral is zero; no promotion authority |
+| Stage 2-D | TRAIN-only target-learnability audit implementation added; private audit pending | diagnose target-space sparsity before changing model/representation; no model fitting or non-TRAIN access |
 
 ## Stage 1-C first official v1 run
 
 The exact first-run inputs were operationally hash-verified outside Git:
 
-- 694 human-adjudicated decisions: SHA-256 `0e53133bf150a101f1b55329c4c5741168fbe7b9ac9a748f221ec07fade1be4a`;
-- pinned TAVERN ZIP: SHA-256 `b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63`;
-- locked execution runtime: Python `3.12.8`.
+- 694 human-adjudicated decisions SHA-256 `0e53133bf150a101f1b55329c4c5741168fbe7b9ac9a748f221ec07fade1be4a`;
+- pinned TAVERN ZIP SHA-256 `b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63`;
+- locked runtime Python `3.12.8`.
 
-The first private attempt correctly stopped before model fitting when four TRAIN `PRESERVE_VARIANTS` records exposed an integration mismatch: reviewed A/B provenance slots can deterministically normalize to the same `NormalizedSTLabel`, while the model contract forbids duplicate acceptable targets.
+The first private attempt correctly stopped before fitting when four TRAIN `PRESERVE_VARIANTS` records exposed a source-provenance/model-target mismatch: distinct reviewed A/B source slots can normalize to the same `NormalizedSTLabel` while the model contract forbids duplicate acceptable targets.
 
-Stage 1-C resolved this without changing the human decisions, raw TAVERN evidence, normalized-target manifest, split, or pinned private shard provenance contract. Private shards preserve source-target slots and exact pinned digests. Model fitting and validation use `CANONICAL_NORMALIZED_UNIQUE_SET` semantics so canonically identical normalized labels collapse to one effective acceptable target while distinct variants remain distinct.
+Stage 1-C resolved this without changing human decisions, raw TAVERN evidence, the normalized-target manifest, split, or pinned private shard provenance. Private shards retain source-target slots while the model boundary uses `CANONICAL_NORMALIZED_UNIQUE_SET` semantics.
 
-The rerun completed model fitting and deterministic reverse-order reproduction. The operator-provided summary reports:
+The rerun completed fitting and deterministic reverse-order reproduction. The operator-provided summary reports:
 
 - `model_training_started=true`;
 - `deterministic_rerun_match=true`;
-- TRAIN: 487 records / 500 source target slots / 496 effective model targets;
-- VALIDATION: 125 records / 154 source target slots / 154 effective model targets;
-- exact normalized-label match: `0.000`;
-- variant-aware acceptable-set accuracy: `0.000`;
-- Roman-numeral component accuracy: `0.000`;
-- functional-component accuracy: `0.056`;
-- all four frozen validation thresholds: FAIL;
+- TRAIN 487 records / 500 source target slots / 496 effective model targets;
+- VALIDATION 125 records / 154 source target slots / 154 effective model targets;
+- exact normalized-label match `0.000`;
+- variant-aware acceptable-set accuracy `0.000`;
+- Roman-numeral component accuracy `0.000`;
+- functional-component accuracy `0.056`;
+- all four frozen validation thresholds FAIL;
 - `validation_gate_status=HOLD`;
 - `calibration_accessed=false`;
 - `holdout_accessed=false`;
@@ -67,9 +68,7 @@ This remains an operationally observed HOLD rather than a byte-hash-bound final 
 
 ## Stage 1-D / 1-E event-level boundary
 
-Stage 1-D audited 694 reviewed records / 747 selected A/B target paths against TAVERN Joined carriers without treating Joined harmonic labels as authority.
-
-Pinned observations include:
+Stage 1-D audited 694 reviewed records / 747 selected A/B target paths against TAVERN Joined carriers without treating Joined harmonic labels as authority. Pinned observations include:
 
 - 600 selected paths with exact reciprocal-duration sequence;
 - 147 mismatched or incomplete paths;
@@ -81,18 +80,18 @@ Pinned observations include:
 - 137 quarantined records;
 - 6,534 harmonic event paths in admitted alignment candidates.
 
-Stage 1-E has a deterministic repository-safe work-family plan over the exact 18 Stage 0-T TRAIN families:
+Stage 1-E has a deterministic work-family plan over the exact 18 Stage 0-T TRAIN families:
 
 - development seed `st-stage1e-grouped-cv-v1`;
 - folds 3;
 - work-family distribution 6 / 6 / 6;
-- assignment policy `SHA256_RANK_ROUND_ROBIN_IDENTITY_ONLY`;
+- policy `SHA256_RANK_ROUND_ROBIN_IDENTITY_ONLY`;
 - group-plan SHA-256 `ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c`;
 - label-aware assignment false.
 
-The separate event-level Stage 1-E private payload handoff remains pending. Stage 1-F event-target materialization therefore remains unauthorized.
+The separate event-level Stage 1-E private handoff remains pending. Stage 1-F event-target materialization therefore remains unauthorized.
 
-## Stage 2-A specialist architecture boundary
+## Stage 2-A / 2-B specialist data boundary
 
 The whole-phrase v1 HOLD motivates decomposition rather than threshold relaxation. The first specialist wave is:
 
@@ -102,26 +101,19 @@ The whole-phrase v1 HOLD motivates decomposition rather than threshold relaxatio
 
 `local_key`, `bass`, `inversion`, `chord_family`, `extension`, `suspension`, `alteration`, and `cadence` remain deferred because current TAVERN target support is absent or insufficient.
 
-## Stage 2-B verified private TRAIN-only materialization
+The Stage 2-B private run completed successfully under the exact source hashes while keeping semantic target parsing TRAIN-only. Bounded receipt values:
 
-The Stage 2-B private run completed successfully under the exact source hashes while keeping target parsing TRAIN-only.
-
-Bounded receipt values:
-
-- private record manifest SHA-256: `cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd`;
-- TRAIN records: 487;
-- work families: 18;
-- fold record distribution: 156 / 167 / 164;
-- fold work-family distribution: 6 / 6 / 6;
-- source target slots: 500;
-- feature vocabulary: 5,265;
-- feature occurrences: 94,065;
-- Roman Numeral eligible records: 487 / 487;
-- Key eligible records: 461 / 487;
-- Function eligible records: 478 / 487.
-
-The materializer reports:
-
+- private record manifest SHA-256 `cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd`;
+- TRAIN records 487;
+- work families 18;
+- fold record distribution 156 / 167 / 164;
+- fold work-family distribution 6 / 6 / 6;
+- source target slots 500;
+- feature vocabulary 5,265;
+- feature occurrences 94,065;
+- Roman Numeral eligible records 487 / 487;
+- Key eligible records 461 / 487;
+- Function eligible records 478 / 487;
 - `non_train_annotation_bodies_materialized=false`;
 - `original_validation_target_access=false`;
 - `calibration_target_access=false`;
@@ -129,37 +121,75 @@ The materializer reports:
 - `model_training_started=false`;
 - `production_authority=false`.
 
-The repository receipt is explicitly based on operator-provided summary values. It does not claim an exact hash for the summary file itself. The full `specialist-train.private.json` remains external.
+The full `specialist-train.private.json` remains external. The repository receipt is based on operator-provided summary values and does not claim an exact hash for the summary file itself.
 
-## Stage 2-C TRAIN-only specialist development boundary
+## Stage 2-C observed TRAIN-only specialist diagnostic
 
-Stage 2-C is the first specialist model-development gate. It pins the exact Stage 2-B private record manifest above and permits fitting only inside the three existing TRAIN development folds.
-
-The initial model family is `specialist-multinomial-nb-v1`, fitted independently for Roman Numeral, Key, and Function. This is a decomposition baseline, not a claim that bag-of-words features or Naive Bayes are the final architecture.
-
-Frozen smoothing candidates are:
+Stage 2-C pins the exact Stage 2-B private record manifest and permits fitting only inside the three existing TRAIN development folds. Its baseline model family is `specialist-multinomial-nb-v1`, independently fitted for Roman Numeral, Key, and Function using frozen alpha candidates:
 
 `0.25, 0.5, 1.0, 2.0, 4.0`
 
-For each specialist, each candidate is evaluated by three-fold grouped CV. A work family is never present on both fit and evaluation sides of the same fold. Missing Key/Function targets are excluded rather than inferred. Preserved variants retain equal-weight acceptable-set semantics.
-
-Candidate selection is frozen before the private run:
+Candidate selection is frozen as:
 
 `MAX_POOLED_ACCURACY_THEN_LOWEST_ALPHA`
 
-The runner also computes a fit-side majority baseline for each held-out fold. The safe output contains counts/accuracies and selected alpha only; it does not serialize target values, private records, feature vectors, or model checkpoints.
+The operator-provided private CV summary reports deterministic reproduction and the following pooled results:
 
-Stage 2-C explicitly keeps these boundaries closed:
+| Specialist | Selected alpha | CV accuracy | Majority baseline | Delta |
+| --- | ---: | ---: | ---: | ---: |
+| Roman Numeral | 0.25 | 0.000000 | 0.000000 | 0.000000 |
+| Key | 0.25 | 0.520607 | 0.143167 | +0.377440 |
+| Function | 2.0 | 0.202929 | 0.202929 | 0.000000 |
 
-- final full-TRAIN specialist fit;
+Interpretation is intentionally bounded:
+
+- Key has a clear TRAIN-internal learning signal above the fit-side majority baseline.
+- Function provides no pooled gain over the majority baseline with the current phrase-level target and bag-of-words NB baseline.
+- Roman Numeral obtains zero closed-set grouped-CV accuracy, and even its majority baseline is zero. This strongly motivates a target learnability audit before changing model capacity.
+
+The reported run kept:
+
+- `original_validation_target_access=false`;
+- `calibration_target_access=false`;
+- `holdout_target_access=false`;
+- `full_train_final_fit_started=false`;
+- `event_level_training_authorized=false`;
+- `production_authority=false`;
+- `calibrated_probability_output=false`;
+- `deterministic_rerun_match=true`.
+
+`evidence/stage2c_private_cv_receipt.v1.json` records only bounded operator-provided summary values. It explicitly does not claim the exact `stage2c-cv-summary.json` file SHA-256 is bound.
+
+## Stage 2-D target-learnability boundary
+
+The current TAVERN normalization adapter materializes Roman Numeral and Function as **whole-phrase JSON sequence strings**. A sequence such as a phrase's full harmonic path therefore becomes one closed-set class under the Stage 2-C baseline. If most complete sequences occur in only one work family/fold, a closed-set classifier cannot predict them in a held-out work family regardless of model capacity.
+
+Stage 2-D tests that hypothesis using only the exact Stage 2-B TRAIN payload. For each specialist it measures:
+
+- unique target count and unique-target-per-record ratio;
+- singleton target count/fraction;
+- target reuse factor;
+- target presence across 1, 2, or all 3 folds;
+- per-fold fit/evaluation target overlap;
+- unseen held-out target occurrence rate;
+- records with no acceptable target observed in the fit folds;
+- closed-set oracle ceiling;
+- privacy-safe sequence-length statistics for Roman Numeral and Function.
+
+The audit writes no target values. It only parses Roman/Function canonical JSON arrays to count their lengths.
+
+Stage 2-D authorizes **no model work**. All of these remain false:
+
+- model fitting;
+- model selection;
+- full-TRAIN final fitting;
 - original VALIDATION target access;
 - CALIBRATION target access;
 - HOLDOUT target access;
-- event-level training;
-- calibrated probability output;
+- event-level training authority;
 - production authority.
 
-Model scores remain `MODEL_SCORE_NOT_PROBABILITY`, and the deterministic `st-guitar-harmonic-engine` resolver remains authoritative.
+The deterministic engine resolver remains authoritative.
 
 ## Scope separation
 
@@ -167,19 +197,25 @@ Three scopes must not be conflated:
 
 1. **whole-phrase v1 experiment** — completed deterministically but HOLD on original VALIDATION; no promotion allowed.
 2. **future event-level v2 development** — Stage 1-D/1-E groundwork exists, but event-target materialization/training remains unauthorized.
-3. **specialist decomposition track** — Stage 2-B private TRAIN-only data gate is complete; Stage 2-C permits only TRAIN-internal grouped-CV diagnostic fitting.
+3. **specialist decomposition track** — Stage 2-B private TRAIN-only data is complete; Stage 2-C produced TRAIN-only diagnostic results; Stage 2-D diagnoses target learnability without fitting a model.
 
 Original VALIDATION, CALIBRATION, HOLDOUT, and Stage 1-D quarantine remain outside iterative specialist development.
 
 ## Next safe work
 
-After Stage 2-C code/CI merge, run the grouped-CV diagnostic against the exact external Stage 2-B payload under Python 3.12.8:
+After Stage 2-D code/CI merge, run the private target-learnability audit under Python 3.12.8:
 
-`python -m scripts.run_stage2c_specialist_cv <specialist-train.private.json> <external-output-dir>`
+`python -m scripts.run_stage2d_target_learnability_audit <specialist-train.private.json> <external-output-dir>`
 
-Review only `stage2c-cv-summary.json`. No model checkpoint is produced at this stage.
+Review only `stage2d-learnability-summary.json`.
 
-The resulting specialist CV metrics determine the next architecture decision. A later stage may authorize either a revised representation/model family or a final full-TRAIN candidate fit, but only after the TRAIN-only diagnostic evidence is reviewed. Original VALIDATION must still remain untouched during that choice.
+The result determines the next specialist architecture choice:
+
+- high unseen/singleton rates or a low closed-set oracle ceiling → redesign Roman/Function target representation before increasing model capacity;
+- adequate target reuse/ceiling but weak Stage 2-C accuracy → improve label-blind features and/or model family;
+- healthy learnability → preserve the target formulation and continue controlled specialist development.
+
+Original VALIDATION must remain untouched during that choice. No full-TRAIN final specialist fit is authorized yet.
 
 For the v1 evidence chain, the exact private `experiment-summary.json` should eventually be hash-bound before the observed HOLD is treated as a final repository evidence receipt.
 

@@ -1,0 +1,52 @@
+{
+  "schema_version": "st-stage2c-private-cv-receipt-v1",
+  "receipt_basis": "OPERATOR_PROVIDED_SUMMARY_CONTENT",
+  "exact_summary_file_sha256_bound": false,
+  "source_stage2b_private_record_manifest_sha256": "cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd",
+  "record_count": 487,
+  "work_family_count": 18,
+  "fold_count": 3,
+  "group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "model_implementation_version": "specialist-multinomial-nb-v1",
+  "development_scope": "STAGE0_T_TRAIN_GROUPED_CV_ONLY",
+  "selection_metric": "GROUPED_CV_ACCEPTABLE_SET_ACCURACY",
+  "selection_policy": "MAX_POOLED_ACCURACY_THEN_LOWEST_ALPHA",
+  "candidate_alphas": [0.25, 0.5, 1.0, 2.0, 4.0],
+  "deterministic_rerun_match": true,
+  "specialists": {
+    "ROMAN_NUMERAL_SPECIALIST": {
+      "eligible_record_count": 487,
+      "selected_alpha": 0.25,
+      "selected_cv_accuracy": 0.0,
+      "majority_baseline_accuracy": 0.0,
+      "accuracy_delta_vs_majority": 0.0
+    },
+    "KEY_SPECIALIST": {
+      "eligible_record_count": 461,
+      "selected_alpha": 0.25,
+      "selected_cv_accuracy": 0.520607375271,
+      "majority_baseline_accuracy": 0.1431670282,
+      "accuracy_delta_vs_majority": 0.377440347071
+    },
+    "FUNCTION_SPECIALIST": {
+      "eligible_record_count": 478,
+      "selected_alpha": 2.0,
+      "selected_cv_accuracy": 0.202928870293,
+      "majority_baseline_accuracy": 0.202928870293,
+      "accuracy_delta_vs_majority": 0.0
+    }
+  },
+  "original_validation_target_access": false,
+  "calibration_target_access": false,
+  "holdout_target_access": false,
+  "full_train_final_fit_started": false,
+  "event_level_training_authorized": false,
+  "production_authority": false,
+  "calibrated_probability_output": false,
+  "deterministic_resolver_remains_authoritative": true,
+  "interpretation": {
+    "key_specialist": "LEARNING_SIGNAL_ABOVE_MAJORITY_BASELINE",
+    "function_specialist": "NO_GAIN_OVER_MAJORITY_BASELINE",
+    "roman_numeral_specialist": "ZERO_CLOSED_SET_CV_ACCURACY_REQUIRES_TARGET_LEARNABILITY_AUDIT"
+  }
+}
