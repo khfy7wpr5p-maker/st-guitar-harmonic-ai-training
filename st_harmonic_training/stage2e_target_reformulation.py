@@ -67,7 +67,9 @@ def build_stage2d_private_receipt() -> dict[str, object]:
         "group_plan_manifest_sha256": PINNED_GROUP_PLAN_SHA256,
         "audit_scope": "STAGE0_T_TRAIN_TARGETS_ONLY",
         "result_scope": "TRAIN_ONLY_TARGET_LEARNABILITY_DIAGNOSTIC",
-        "specialists": STAGE2D_OBSERVED_METRICS,
+        "specialists": {
+            key: dict(value) for key, value in STAGE2D_OBSERVED_METRICS.items()
+        },
         "target_values_serialized": False,
         "model_fitting_started": False,
         "model_selection_started": False,
