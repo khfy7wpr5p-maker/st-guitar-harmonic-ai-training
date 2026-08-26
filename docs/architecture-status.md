@@ -31,6 +31,7 @@ A learned model never becomes the authoritative harmonic resolver, never mutates
 | Stage 1-D | source-derived event-alignment audit | event-level targets/training remain unauthorized |
 | Stage 1-E | deterministic 3-fold TRAIN-only group plan implemented; private 487-record materialization pending | no original VALIDATION/CALIBRATION/HOLDOUT access; no event-level training authority |
 | Stage 2-A | first specialist wave frozen to Roman Numeral, Key, and Function; unsupported targets deferred | architecture/dataset-engineering contract only; specialist training remains unauthorized |
+| Stage 2-B | TRAIN-only private specialist materializer + bounded-summary handoff implemented; private exact run pending | no specialist fitting; non-TRAIN targets remain outside iterative development |
 
 ## Stage 1-C first official v1 run
 
@@ -94,17 +95,11 @@ Stage 1-E has a deterministic repository-safe work-family plan over the exact 18
 
 The implementation also contains a fail-closed materializer for the private Stage 1-B payload. It emits only TRAIN identity/fold rows and rejects source partition drift, group leakage, duplicate phrase identities, HOLDOUT/CALIBRATION access escalation, and non-TRAIN families.
 
-The public repository intentionally does not contain the private full 694-record training payload. Therefore the final 487-record fold materialization summary is still `PENDING_PRIVATE_PAYLOAD`.
-
-This is the current event-level execution boundary:
-
-`Stage 1-E group plan + materializer implementation`
-→ **private Stage 1-B payload handoff required for real 487-record fold materialization**
-→ Stage 1-F event-target materialization contract
+The public repository intentionally does not contain the private full 694-record training payload. Therefore the final 487-record fold materialization summary is still `PENDING_PRIVATE_PAYLOAD` for the separate event-level track.
 
 ## Stage 2-A specialist architecture boundary
 
-The first whole-phrase v1 HOLD motivates decomposition rather than threshold relaxation. Stage 2-A therefore freezes the first specialist wave to targets actually supported by the current TAVERN normalization evidence:
+The first whole-phrase v1 HOLD motivates decomposition rather than threshold relaxation. Stage 2-A freezes the first specialist wave to targets actually supported by the current TAVERN normalization evidence:
 
 - `ROMAN_NUMERAL_SPECIALIST` → `roman_numeral`; 747 normalized targets supported;
 - `KEY_SPECIALIST` → `key`; 692 of 747 normalized targets contain an explicit key;
@@ -112,7 +107,32 @@ The first whole-phrase v1 HOLD motivates decomposition rather than threshold rel
 
 `local_key` is deferred because only 1 of 747 normalized targets reports a key-change sequence. `bass`, `inversion`, `chord_family`, `extension`, `suspension`, `alteration`, and `cadence` are also deferred because the current TAVERN adapter materializes those fields as `null`.
 
-Stage 2-A authorizes architecture and dataset engineering only. Specialist fitting remains closed until a later reviewed stage supplies a TRAIN-only grouped-CV development path. CALIBRATION, HOLDOUT, event-level training, and production authority remain closed.
+Stage 2-A authorizes architecture and dataset engineering only. CALIBRATION, HOLDOUT, event-level training, and production authority remain closed.
+
+## Stage 2-B TRAIN-only specialist boundary
+
+Stage 2-B implements a separate private materializer rather than weakening the existing Stage 0/1 pinned builders.
+
+Execution order is deliberately fail-closed:
+
+1. validate the exact 694-decision artifact and derive the existing Stage 0-T split;
+2. select the exact 487 TRAIN phrase identities before semantic annotation parsing;
+3. bind each TRAIN work family to the pinned Stage 1-E 3-fold plan;
+4. verify the pinned TAVERN archive and score inventory;
+5. read/normalize only the selected A/B annotation members for TRAIN phrases;
+6. extract the existing label-blind `**kern` baseline features for TRAIN scores;
+7. project each TRAIN record into Roman Numeral, Key, and Function specialist targets;
+8. preserve human A/B `source_targets` while canonicalizing non-null `effective_targets` per specialist;
+9. write the full private payload outside Git and emit only a bounded summary for review.
+
+The materializer does not parse or serialize original VALIDATION/CALIBRATION/HOLDOUT harmonic target bodies. Global score-inventory integrity checking remains label-blind and is allowed. Stage 2-B carries the existing bag-of-words feature representation only as a baseline; it does not claim that representation is adequate after the v1 HOLD.
+
+Expected private outputs:
+
+- `specialist-train.private.json`
+- `specialist-train-summary.json`
+
+The private run is still pending. Until its bounded summary proves the 487-record/18-family/3-fold boundary and source hashes, specialist fitting remains unauthorized.
 
 ## Scope separation
 
@@ -120,21 +140,23 @@ Three scopes must not be conflated:
 
 1. **whole-phrase v1 experiment** — completed deterministically but currently HOLD on original VALIDATION; no promotion is allowed.
 2. **future event-level v2 development** — Stage 1-D/1-E do not authorize event-target materialization or event-level model training.
-3. **specialist decomposition track** — Stage 2-A defines bounded Roman Numeral, Key, and Function specialists but does not yet authorize fitting.
+3. **specialist decomposition track** — Stage 2-A defines Roman Numeral, Key, and Function specialists; Stage 2-B prepares TRAIN-only private data, but fitting remains closed pending the private materialization gate.
 
 Original VALIDATION, CALIBRATION, HOLDOUT, and Stage 1-D quarantine remain outside iterative TRAIN-only development.
 
 ## Next safe work
 
-For the v1 evidence chain, the exact private `experiment-summary.json` should be hash-bound before the observed HOLD is treated as a final repository evidence receipt.
+For the v1 evidence chain, the exact private `experiment-summary.json` should eventually be hash-bound before the observed HOLD is treated as a final repository evidence receipt.
 
-For the specialist track, the next safe code stage is a **TRAIN-only specialist data/representation audit** that projects the existing TRAIN payload into separate Roman Numeral, Key, and Function tasks under the already-defined grouped internal CV policy. That stage must not read original VALIDATION, CALIBRATION, or HOLDOUT and must not start model fitting.
+For the specialist track, the immediate next operation after Stage 2-B code/CI merge is the exact private materialization under Python `3.12.8`:
 
-For the separate event-level track, the next operation remains private Stage 1-E record materialization using the hash-pinned Stage 1-B full payload:
+`python -m scripts.materialize_stage2b_specialist_train <694-decisions.json> <TAVERN-master.zip> <external-output-dir>`
 
-`python scripts/materialize_stage1e_internal_cv.py <private-training-payload.json> --summary-only`
+Review only `specialist-train-summary.json`. Do not commit `specialist-train.private.json`.
 
-The complete assignment should remain private; only the bounded summary may be reviewed for commit.
+Only after that bounded summary passes may a separately reviewed Stage 2-C contract authorize TRAIN-only grouped-CV feature/model experimentation. Original VALIDATION must not be reused during iterative model/feature selection; CALIBRATION and HOLDOUT stay closed.
+
+For the separate event-level track, Stage 1-F remains unauthorized until its own Stage 1-E private handoff is reviewed.
 
 ## Repository security and artifact boundary
 
