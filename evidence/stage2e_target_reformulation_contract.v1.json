@@ -1,0 +1,53 @@
+{
+  "calibrated_probability_output": false,
+  "calibration_target_access": false,
+  "decision_basis": "TRAIN_ONLY_TARGET_LEARNABILITY_DIAGNOSTIC",
+  "deterministic_resolver_remains_authoritative": true,
+  "event_level_training_authorized": false,
+  "event_target_materialization_authorized": false,
+  "full_train_final_fit_authorized": false,
+  "function_alignment_scope": "NOT_YET_PROVEN",
+  "holdout_target_access": false,
+  "model_fitting_authorized": false,
+  "model_selection_authorized": false,
+  "original_validation_target_access": false,
+  "production_authority": false,
+  "roman_alignment_scope": "STAGE1D_CANDIDATES_ONLY_NOT_AUTHORITY",
+  "schema_version": "st-stage2e-specialist-target-reformulation-contract-v1",
+  "source_corpus": "TAVERN_REVIEWED_694",
+  "source_stage1d_alignment_manifest_sha256": "95fdae9b9d336eb9c50646b2c980954d54c87dac95902974b1836dad77ff7552",
+  "source_stage1e_group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "source_stage2b_private_record_manifest_sha256": "cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd",
+  "source_stage2d_receipt_schema": "st-stage2d-private-learnability-receipt-v1",
+  "specialists": {
+    "FUNCTION_SPECIALIST": {
+      "current_target_field": "phrase",
+      "current_target_shape": "WHOLE_PHRASE_JSON_SEQUENCE_AS_CLASS",
+      "next_prerequisite": "FUNCTION_EVENT_CARRIER_ALIGNMENT_AUDIT_REQUIRED",
+      "next_target_shape": "ALIGNED_FUNCTION_EVENT_OR_TOKEN_SEQUENCE",
+      "stage2d_closed_set_oracle_ceiling": 0.734309623431,
+      "stage2d_unseen_target_occurrence_rate": 0.271784232365,
+      "target_decision": "RETIRE_WHOLE_PHRASE_CLASSIFICATION_TARGET"
+    },
+    "KEY_SPECIALIST": {
+      "current_target_field": "key",
+      "current_target_shape": "SCALAR_CLASS",
+      "next_prerequisite": "SEPARATE_TRAIN_ONLY_MODEL_FEATURE_GATE_REQUIRED",
+      "next_target_shape": "SCALAR_CLASS",
+      "stage2d_closed_set_oracle_ceiling": 0.984815618221,
+      "stage2d_unseen_target_occurrence_rate": 0.015184381779,
+      "target_decision": "PRESERVE_SCALAR_TARGET"
+    },
+    "ROMAN_NUMERAL_SPECIALIST": {
+      "current_target_field": "roman_numeral",
+      "current_target_shape": "WHOLE_PHRASE_JSON_SEQUENCE_AS_CLASS",
+      "next_prerequisite": "STAGE1E_PRIVATE_TRAIN_EVENT_MATERIALIZATION_AND_STAGE1F_CONTRACT_REQUIRED",
+      "next_target_shape": "ALIGNED_HARMONIC_EVENT_SEQUENCE",
+      "stage2d_closed_set_oracle_ceiling": 0.0,
+      "stage2d_unseen_target_occurrence_rate": 1.0,
+      "target_decision": "RETIRE_WHOLE_PHRASE_CLASSIFICATION_TARGET"
+    }
+  },
+  "stage1d_quarantine_reuse_authorized": false,
+  "target_reformulation_only": true
+}
