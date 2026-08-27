@@ -26,6 +26,7 @@ from .stage2e_target_reformulation import (
 )
 from .tavern_event_alignment_audit import (
     PINNED_ALIGNMENT_MANIFEST_SHA256,
+    TavernEventAlignmentError,
     _event_sequences,
     _joined_member,
 )
@@ -102,21 +103,13 @@ def parse_function_carrier_rows(raw_text: str) -> dict[str, object]:
     function_index = function_indices[0] if function_indices else None
 
     harmonic_durations: list[str | None] = []
-    row_width_mismatch_count = 0
-    function_event_count = 0
-    function_on_harmonic_event_count = 0
-    function_without_harmonic_event_count = 0
-    function_reciprocal_explicit_count = 0
-    function_harmonic_reciprocal_comparable_count = 0
-    function_harmonic_reciprocal_exact_count = 0
-    function_harmonic_reciprocal_mismatch_count = 0
-
+    stats: Counter[str] = Counter()
     for line in lines[header_index + 1 :]:
         if not line or line.startswith("!!"):
             continue
         cells = line.split("\t")
         if len(cells) != len(columns):
-            row_width_mismatch_count += 1
+            stats["row_width_mismatch_count"] += 1
         harmonic = cells[harmonic_index].strip() if harmonic_index < len(cells) else ""
         harmonic_is_data = _is_data_token(harmonic)
         harmonic_reciprocal = _reciprocal(harmonic) if harmonic_is_data else None
@@ -128,20 +121,20 @@ def parse_function_carrier_rows(raw_text: str) -> dict[str, object]:
         function = cells[function_index].strip() if function_index < len(cells) else ""
         if not _is_data_token(function):
             continue
-        function_event_count += 1
+        stats["function_event_count"] += 1
         function_reciprocal = _reciprocal(function)
         if function_reciprocal is not None:
-            function_reciprocal_explicit_count += 1
+            stats["function_reciprocal_explicit_count"] += 1
         if harmonic_is_data:
-            function_on_harmonic_event_count += 1
+            stats["function_on_harmonic_event_count"] += 1
             if function_reciprocal is not None and harmonic_reciprocal is not None:
-                function_harmonic_reciprocal_comparable_count += 1
+                stats["function_harmonic_reciprocal_comparable_count"] += 1
                 if function_reciprocal == harmonic_reciprocal:
-                    function_harmonic_reciprocal_exact_count += 1
+                    stats["function_harmonic_reciprocal_exact_count"] += 1
                 else:
-                    function_harmonic_reciprocal_mismatch_count += 1
+                    stats["function_harmonic_reciprocal_mismatch_count"] += 1
         else:
-            function_without_harmonic_event_count += 1
+            stats["function_without_harmonic_event_count"] += 1
 
     if not harmonic_durations:
         raise Stage2FFunctionAlignmentError("analysis contains no harmonic data events")
@@ -153,20 +146,26 @@ def parse_function_carrier_rows(raw_text: str) -> dict[str, object]:
         "harmonic_missing_reciprocal_count": sum(
             duration is None for duration in harmonic_durations
         ),
-        "row_width_mismatch_count": row_width_mismatch_count,
-        "function_event_count": function_event_count,
-        "function_on_harmonic_event_count": function_on_harmonic_event_count,
-        "function_without_harmonic_event_count": function_without_harmonic_event_count,
-        "function_reciprocal_explicit_count": function_reciprocal_explicit_count,
-        "function_harmonic_reciprocal_comparable_count": (
-            function_harmonic_reciprocal_comparable_count
-        ),
-        "function_harmonic_reciprocal_exact_count": (
-            function_harmonic_reciprocal_exact_count
-        ),
-        "function_harmonic_reciprocal_mismatch_count": (
-            function_harmonic_reciprocal_mismatch_count
-        ),
+        "row_width_mismatch_count": stats["row_width_mismatch_count"],
+        "function_event_count": stats["function_event_count"],
+        "function_on_harmonic_event_count": stats[
+            "function_on_harmonic_event_count"
+        ],
+        "function_without_harmonic_event_count": stats[
+            "function_without_harmonic_event_count"
+        ],
+        "function_reciprocal_explicit_count": stats[
+            "function_reciprocal_explicit_count"
+        ],
+        "function_harmonic_reciprocal_comparable_count": stats[
+            "function_harmonic_reciprocal_comparable_count"
+        ],
+        "function_harmonic_reciprocal_exact_count": stats[
+            "function_harmonic_reciprocal_exact_count"
+        ],
+        "function_harmonic_reciprocal_mismatch_count": stats[
+            "function_harmonic_reciprocal_mismatch_count"
+        ],
     }
 
 
@@ -185,12 +184,9 @@ def classify_function_source_path(
             accepted_harmonic_spines=("**harm",),
             require_kern_spine=True,
         )
-    except Exception as exc:
+    except TavernEventAlignmentError:
         joined_durations = []
         reasons.add("JOINED_CARRIER_PARSE_FAILED")
-        joined_parse_error = str(exc)
-    else:
-        joined_parse_error = None
 
     encoder_durations = list(parsed["harmonic_durations"])
     harmonic_sequence_exact = bool(encoder_durations) and (
@@ -220,12 +216,7 @@ def classify_function_source_path(
         == function_event_count
         and int(parsed["function_harmonic_reciprocal_mismatch_count"]) == 0
     )
-
-    result = {
-        key: value
-        for key, value in parsed.items()
-        if key != "harmonic_durations"
-    }
+    result = {key: value for key, value in parsed.items() if key != "harmonic_durations"}
     result.update(
         {
             "joined_harmonic_event_count": len(joined_durations),
@@ -235,8 +226,6 @@ def classify_function_source_path(
             "quarantine_reasons": sorted(reasons),
         }
     )
-    if joined_parse_error is not None:
-        result["joined_parse_error_present"] = True
     return result
 
 
@@ -368,7 +357,7 @@ def build_stage2f_function_alignment_summary(
             corrupt = archive.testzip()
             if corrupt is not None:
                 raise Stage2FFunctionAlignmentError(f"corrupt archive member: {corrupt}")
-            _archive_root(infos)
+            root = _archive_root(infos)
 
             for phrase in sorted(train_identity):
                 identity = train_identity[phrase]
@@ -391,10 +380,7 @@ def build_stage2f_function_alignment_summary(
                             f"TRAIN annotation SHA-256 mismatch: {phrase}/{source}"
                         )
                     joined_info = _joined_member(
-                        infos,
-                        root=PureArchiveRoot.from_infos(infos),
-                        phrase_key=phrase,
-                        source=source,
+                        infos, root=root, phrase_key=phrase, source=source
                     )
                     joined_raw = archive.read(joined_info)
                     try:
@@ -444,7 +430,6 @@ def build_stage2f_function_alignment_summary(
                         stats["quarantine_record_count"] += 1
                 else:
                     stats["missing_function_record_count"] += 1
-
     except zipfile.BadZipFile as exc:
         raise Stage2FFunctionAlignmentError("invalid TAVERN ZIP archive") from exc
 
@@ -552,12 +537,6 @@ def build_stage2f_function_alignment_summary(
         "production_authority": False,
         "deterministic_resolver_remains_authoritative": True,
     }
-
-
-class PureArchiveRoot:
-    @staticmethod
-    def from_infos(infos: list[zipfile.ZipInfo]) -> str:
-        return _archive_root(infos)
 
 
 def validate_stage2f_summary(data: object) -> dict[str, Any]:
