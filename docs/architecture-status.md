@@ -35,6 +35,7 @@ A learned model never becomes the authoritative harmonic resolver, never mutates
 | Stage 2-C | three independent specialist NB baselines evaluated by TRAIN-only grouped CV | Key shows learning signal; Function shows no gain over majority; Roman Numeral is zero; no promotion authority |
 | Stage 2-D | private TRAIN-only target-learnability audit completed | Key target is structurally learnable; Function is partially sparse; Roman whole-phrase class target has zero closed-set ceiling |
 | Stage 2-E | specialist target reformulation contract freezes separate Key / Function / Roman paths | target reformulation only; no model fitting or event-target authority |
+| Stage 2-F | TRAIN-only Function event-carrier alignment audit implementation added; private audit pending | carrier evidence only; no target-shape decision, event-target materialization, or model authority |
 
 ## Stage 1-C first official v1 run
 
@@ -192,8 +193,6 @@ Stage 2-E freezes separate target decisions before any new fitting:
 - intended replacement: aligned Function event/token sequence;
 - prerequisite: `FUNCTION_EVENT_CARRIER_ALIGNMENT_AUDIT_REQUIRED`.
 
-No authoritative Function event carrier alignment is currently proven, so no Function event target may be materialized yet.
-
 ### Roman Numeral
 
 - current target: whole-phrase JSON Roman sequence treated as one class;
@@ -202,22 +201,49 @@ No authoritative Function event carrier alignment is currently proven, so no Fun
 - Stage 1-D event-alignment rows remain candidates, not target authority;
 - prerequisite: private TRAIN-only Stage 1-E event materialization plus a later Stage 1-F contract.
 
-Stage 1-D quarantined rows remain excluded. Stage 2-E does not reopen them.
+Stage 1-D quarantined rows remain excluded. Stage 2-E does not reopen them. All Stage 2-E fitting, event-target, non-TRAIN, probability, and production authority switches remain false.
 
-All Stage 2-E authority switches remain false:
+## Stage 2-F Function carrier boundary
 
-- model fitting;
-- model selection;
-- final full-TRAIN fitting;
+Stage 2-F implements the Function prerequisite without materializing Function targets.
+
+The private audit chain is:
+
+`selected TRAIN Encoder **function row → same-row Encoder harmonic event → source-matched Joined harmonic carrier by exact reciprocal sequence`
+
+The Joined harmonic **label text is not authority**. It is used only as an event carrier whose reciprocal sequence is compared with the hash-verified selected Encoder annotation, matching the structural principle established in Stage 1-D.
+
+A source path becomes an onset-carrier candidate only when:
+
+- it contains Function data events;
+- every Function data event occurs on an Encoder harmonic-data row;
+- the selected Encoder row width is stable;
+- the complete Encoder harmonic reciprocal-event sequence is explicit and exactly matches the source-matched Joined carrier.
+
+Stage 2-F deliberately keeps Function reciprocal-duration equality as a separate diagnostic. A Function label can span more than one harmonic event, so forcing Function duration = harmonic event duration could destroy valid segment semantics. The private summary therefore distinguishes:
+
+- onset-carrier coverage;
+- duration-exact single-event coverage;
+- Function events without a harmonic carrier;
+- Function-vs-harmonic reciprocal comparability/mismatch;
+- fold-level candidate coverage.
+
+The only operator-visible output is `stage2f-function-alignment-summary.json`. It contains no Function target strings, per-record rows, event-index mappings, feature vectors, or checkpoint.
+
+Stage 2-F keeps all of these false:
+
+- target-shape decision authority;
 - event-target materialization;
+- model fitting / model selection;
+- final full-TRAIN fitting;
 - event-level training;
 - original VALIDATION target access;
 - CALIBRATION target access;
 - HOLDOUT target access;
-- production authority;
-- calibrated probability output.
+- Stage 1-D quarantine reuse;
+- production authority.
 
-The deterministic `st-guitar-harmonic-engine` resolver remains authoritative.
+The private Stage 2-F audit has not yet been run, so no Function event/segment target formulation is currently approved.
 
 ## Scope separation
 
@@ -225,19 +251,21 @@ Three scopes must not be conflated:
 
 1. **whole-phrase v1 experiment** — completed deterministically but HOLD on original VALIDATION; no promotion allowed.
 2. **event-level development** — Stage 1-D/1-E groundwork exists, but authoritative event-target materialization/training remains unauthorized.
-3. **specialist decomposition track** — Stage 2-B data is complete, Stage 2-C produced TRAIN-only diagnostics, Stage 2-D diagnosed target learnability, and Stage 2-E now freezes target reformulation before further model work.
+3. **specialist decomposition track** — Stage 2-B data is complete, Stage 2-C produced TRAIN-only diagnostics, Stage 2-D diagnosed target learnability, Stage 2-E froze target reformulation, and Stage 2-F now audits Function score-carrier feasibility without fitting.
 
 Original VALIDATION, CALIBRATION, HOLDOUT, and Stage 1-D quarantine remain outside iterative specialist development.
 
 ## Next safe work
 
-Stage 2-E splits the next work into three independent gates:
+After Stage 2-F code/CI merge, run the private audit under Python 3.12.8 using the exact decision JSON and pinned TAVERN ZIP. Review only `stage2f-function-alignment-summary.json`.
 
-1. **Key:** define a TRAIN-only model/feature improvement gate while preserving scalar targets.
-2. **Function:** audit Function event-carrier alignment on TRAIN only; do not materialize event targets yet.
-3. **Roman Numeral:** complete the private TRAIN-only Stage 1-E event materialization prerequisite, then define Stage 1-F before any event-target training.
+The observed summary determines the next Function gate:
 
-No new model run is authorized by Stage 2-E itself.
+- strong onset coverage + strong duration equality → consider an event-label target contract;
+- strong onset coverage + weak duration equality → consider a duration-bearing segment target contract;
+- weak onset coverage → redesign/quarantine the carrier mapping before target materialization.
+
+The Roman Numeral path remains separately blocked on private Stage 1-E event materialization + Stage 1-F. The Key path remains eligible for a separate TRAIN-only scalar feature/model gate. No Stage 2-F result can authorize model fitting by itself.
 
 For the v1 evidence chain, the exact private `experiment-summary.json` should eventually be hash-bound before the observed HOLD is treated as a final repository evidence receipt.
 
