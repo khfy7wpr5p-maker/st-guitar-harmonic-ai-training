@@ -463,11 +463,13 @@ def _materialize_candidate_record_events(
 def _variant_provenance_counts(
     decisions_by_phrase: dict[str, dict[str, Any]],
     materialized_sources_by_phrase: dict[str, set[str]],
+    *,
+    eligible_phrases: set[str],
 ) -> dict[str, int]:
     preserve_train_records = 0
     preserve_materialized_records = 0
     preserve_materialized_source_paths = 0
-    for phrase in sorted(decisions_by_phrase):
+    for phrase in sorted(eligible_phrases):
         decision = decisions_by_phrase[phrase]
         if decision.get("decision") != "PRESERVE_VARIANTS":
             continue
@@ -800,7 +802,9 @@ def build_stage2g_function_onset_event_materialization(
             "B": source_event_counts["B"],
         },
         "variant_provenance_counts": _variant_provenance_counts(
-            decisions_by_phrase, materialized_sources_by_phrase
+            decisions_by_phrase,
+            materialized_sources_by_phrase,
+            eligible_phrases=set(train_identity),
         ),
         "private_event_manifest_sha256": _canonical_sha256(materialized_events),
         "function_specialist_target_shape": FUNCTION_SPECIALIST_TARGET_SHAPE,
