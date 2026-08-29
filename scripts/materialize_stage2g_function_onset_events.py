@@ -26,7 +26,7 @@ class Stage2GFunctionOnsetEventHandoffError(ValueError):
 def _reject_existing_symlink_component(path: Path) -> None:
     current = path if path.is_absolute() else Path.cwd() / path
     for candidate in (current, *current.parents):
-        if candidate.exists() and candidate.is_symlink():
+        if candidate.is_symlink():
             raise Stage2GFunctionOnsetEventHandoffError(
                 f"output path symlink rejected: {candidate}"
             )
