@@ -1,0 +1,70 @@
+{
+  "archive_sha256": "b95d85bb3f1e5c0f4ea6df772928d247243485abd93153f0550d6be2fba4fc63",
+  "calibration_target_access": false,
+  "carrier_authority": "ENCODER_HARMONIC_EVENT_WITH_JOINED_STRUCTURE_EVIDENCE",
+  "deterministic_resolver_remains_authoritative": true,
+  "duration_inference_authorized": false,
+  "eligible_original_partition": "TRAIN",
+  "event_level_training_authorized": false,
+  "event_target_materialization_authorized": true,
+  "fold_count": 3,
+  "fold_function_eligible_record_distribution": {
+    "0": 156,
+    "1": 167,
+    "2": 155
+  },
+  "fold_onset_carrier_candidate_record_distribution": {
+    "0": 97,
+    "1": 130,
+    "2": 128
+  },
+  "fold_record_distribution": {
+    "0": 156,
+    "1": 167,
+    "2": 164
+  },
+  "fold_work_family_distribution": {
+    "0": 6,
+    "1": 6,
+    "2": 6
+  },
+  "full_train_final_fit_started": false,
+  "function_eligible_record_count": 478,
+  "function_specialist_target_shape": "ONSET_EVENT",
+  "function_supported_source_target_count": 491,
+  "function_token_rewrite_authorized": false,
+  "holdout_target_access": false,
+  "input_record_count": 487,
+  "joined_harmonic_labels_authoritative": false,
+  "model_selection_started": false,
+  "model_training_started": false,
+  "non_train_annotation_bodies_materialized": false,
+  "onset_carrier_candidate_record_count": 355,
+  "onset_carrier_candidate_source_path_count": 366,
+  "original_validation_target_access": false,
+  "private_payload_external_only": true,
+  "production_authority": false,
+  "quarantine_record_count": 123,
+  "quarantine_source_path_count": 125,
+  "rejected_target_shapes": [
+    "AUTO_FILLED_FUNCTION",
+    "EVENT_WITH_INFERRED_DURATION",
+    "JOINED_HARMONIC_LABEL_AS_FUNCTION_AUTHORITY",
+    "SEGMENT_WITH_INFERRED_DURATION",
+    "WHOLE_PHRASE_SEQUENCE_AS_CLASS"
+  ],
+  "schema_version": "st-stage2g-function-onset-event-target-contract-v1",
+  "segment_boundary_inference_authorized": false,
+  "selected_source_path_count": 500,
+  "source_corpus": "TAVERN_REVIEWED_694",
+  "source_revision": "7cc65dc5365603a92376af50ac71491bea7a16ae",
+  "source_stage1d_alignment_manifest_sha256": "95fdae9b9d336eb9c50646b2c980954d54c87dac95902974b1836dad77ff7552",
+  "source_stage1e_group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "source_stage2b_private_record_manifest_sha256": "cd39690a4be0355a3fbbac303395d4888a89d4204a81af11598e21a822c040cd",
+  "source_stage2f_diagnostic_manifest_sha256": "968ea1afb3746d93702561c9472c01f3d6045866eb428447a20b14a22039885b",
+  "stage1d_quarantine_reuse_authorized": false,
+  "stage2f_quarantine_reuse_authorized": false,
+  "target_authority": "HUMAN_SELECTED_ENCODER_FUNCTION_TOKEN",
+  "validated_human_decisions_sha256": "0e53133bf150a101f1b55329c4c5741168fbe7b9ac9a748f221ec07fade1be4a",
+  "work_family_count": 18
+}
