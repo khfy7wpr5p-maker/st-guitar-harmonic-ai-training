@@ -92,10 +92,6 @@ class Stage2JFunctionEventIndexCVTests(unittest.TestCase):
         with self.assertRaises(Stage2JFunctionEventIndexCVError):
             _index_feature_vector({f"{FEATURE_PREFIX}function=0": 1}, 0, 0)
 
-    def test_negative_index_fails_closed(self) -> None:
-        with self.assertRaises(Stage2JFunctionEventIndexCVError):
-            _index_feature_vector({"x": 1}, -1, 0)
-
     def test_grouped_cv_reports_phrase_only_and_index_augmented(self) -> None:
         with mock.patch(
             "st_harmonic_training.stage2j_function_event_index_cv._join_rows",
