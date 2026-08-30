@@ -1,0 +1,1 @@
+Stage 2-H is TRAIN-only grouped development evaluation for the Function ONSET_EVENT target. It consumes private Stage 2-B phrase-context features plus private Stage 2-G event targets, preserves Stage 1-E work-family folds, emits aggregate-only summaries, and does not authorize full-TRAIN final fit, non-TRAIN target access, calibrated probabilities, or production authority.
