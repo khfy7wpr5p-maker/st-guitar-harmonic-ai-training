@@ -75,6 +75,7 @@ PINNED_STAGE2F_DIAGNOSTIC_MANIFEST_SHA256 = (
 EXPECTED_ONSET_CANDIDATE_RECORD_COUNT = 355
 EXPECTED_QUARANTINE_RECORD_COUNT = 123
 EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT = 366
+EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT = 363
 EXPECTED_QUARANTINE_SOURCE_PATH_COUNT = 125
 EXPECTED_FOLD_RECORD_DISTRIBUTION = {"0": 156, "1": 167, "2": 164}
 EXPECTED_FOLD_FUNCTION_ELIGIBLE_RECORD_DISTRIBUTION = {
@@ -232,6 +233,7 @@ def build_stage2g_contract() -> dict[str, object]:
             EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT
         ),
         "quarantine_source_path_count": EXPECTED_QUARANTINE_SOURCE_PATH_COUNT,
+        "materializable_source_path_count": EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT,
         "fold_count": FOLD_COUNT,
         "work_family_count": EXPECTED_TRAIN_WORK_FAMILY_COUNT,
         "fold_record_distribution": receipt["fold_record_distribution"],
@@ -748,9 +750,11 @@ def build_stage2g_function_onset_event_materialization(
     materialized_source_path_count = sum(
         len(sources) for sources in materialized_sources_by_phrase.values()
     )
-    if materialized_source_path_count != EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT:
+    if materialized_source_path_count != EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT:
         raise Stage2GFunctionOnsetEventError(
-            "candidate source path belongs to a non-materializable record"
+            f"materializable source path count changed: "
+            f"{materialized_source_path_count} != "
+            f"{EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT}"
         )
     materialized_events.sort(
         key=lambda item: (
@@ -860,7 +864,7 @@ def build_stage2g_summary(data: object) -> dict[str, object]:
             EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT
         ),
         "quarantine_source_path_count": EXPECTED_QUARANTINE_SOURCE_PATH_COUNT,
-        "materialized_source_path_count": EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT,
+        "materialized_source_path_count": EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT,
         "fold_record_distribution": EXPECTED_FOLD_RECORD_DISTRIBUTION,
         "fold_function_eligible_record_distribution": (
             EXPECTED_FOLD_FUNCTION_ELIGIBLE_RECORD_DISTRIBUTION

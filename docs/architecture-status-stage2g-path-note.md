@@ -1,0 +1,1 @@
+Stage 2-G private execution evidence distinguishes 366 Stage 2-F onset-carrier candidate source paths from 363 Stage 2-G fully materializable source paths. The latter applies the stricter record-level rule that every selected A/B variant for a record must be an onset-carrier candidate. Partial recovery from records with a quarantined variant remains forbidden.

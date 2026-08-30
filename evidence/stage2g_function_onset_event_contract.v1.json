@@ -36,6 +36,7 @@
   "holdout_target_access": false,
   "input_record_count": 487,
   "joined_harmonic_labels_authoritative": false,
+  "materializable_source_path_count": 363,
   "model_selection_started": false,
   "model_training_started": false,
   "non_train_annotation_bodies_materialized": false,
