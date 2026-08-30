@@ -1,0 +1,33 @@
+{
+  "audit_scope": "EXISTING_STAGE2G_EVENT_IDENTITY_AND_ORDER_FIELDS_ONLY",
+  "audited_fields": [
+    "function_event_index",
+    "carrier_harmonic_event_index",
+    "carrier_source_order_index",
+    "source"
+  ],
+  "calibration_target_access": false,
+  "deterministic_resolver_remains_authoritative": true,
+  "duration_available_in_stage2g_payload": false,
+  "duration_inference_authorized": false,
+  "eligible_original_partition": "TRAIN",
+  "explicit_onset_value_available_in_stage2g_payload": false,
+  "feature_materialization_authorized": false,
+  "full_train_final_fit_started": false,
+  "function_token_rewrite_authorized": false,
+  "holdout_target_access": false,
+  "local_harmonic_label_context_available_in_stage2g_payload": false,
+  "local_score_context_available_in_stage2g_payload": false,
+  "model_selection_started": false,
+  "model_training_started": false,
+  "original_validation_target_access": false,
+  "production_authority": false,
+  "schema_version": "st-stage2i-function-event-feature-alignment-audit-contract-v1",
+  "segment_boundary_available_in_stage2g_payload": false,
+  "segment_boundary_inference_authorized": false,
+  "source_corpus": "TAVERN_REVIEWED_694",
+  "source_provenance_as_model_feature_authorized": false,
+  "source_stage1e_group_plan_manifest_sha256": "ae15ed507247548907815f8ee1a5586f9fa2384a32d5102e887ddedff52e1a4c",
+  "source_stage2g_materialized_event_count": 1854,
+  "source_stage2g_private_event_manifest_sha256": "d7bbd514ec85b87aee423cae9dce39c74e634ab2f1040fed82af0e25105f255d"
+}
