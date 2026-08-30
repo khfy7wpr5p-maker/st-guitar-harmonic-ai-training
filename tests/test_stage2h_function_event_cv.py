@@ -9,8 +9,10 @@ from st_harmonic_training.stage2h_function_event_cv import (
     EXPECTED_STAGE2G_EVENT_COUNT,
     EXPECTED_STAGE2G_MATERIALIZABLE_SOURCE_PATH_COUNT,
     EXPECTED_STAGE2G_PRIVATE_EVENT_MANIFEST_SHA256,
+    FORBIDDEN_SHAREABLE_KEYS,
     SCORE_SEMANTICS,
     Stage2HFunctionEventCVError,
+    _contains_forbidden_shareable_key,
     _fit_nb,
     _predict_nb,
     build_stage2h_contract,
@@ -110,11 +112,16 @@ class Stage2HFunctionEventCVTests(unittest.TestCase):
         self.assertFalse(summary["holdout_target_access"])
         self.assertFalse(summary["production_authority"])
         self.assertTrue(summary["cv_model_fit_performed"])
-        self.assertNotIn("function_token", rendered)
-        self.assertNotIn("phrase_key", rendered)
-        self.assertNotIn("carrier_event_id", rendered)
+        self.assertFalse(summary["function_token_rewrite_used"])
+        self.assertFalse(_contains_forbidden_shareable_key(summary))
+        self.assertTrue(FORBIDDEN_SHAREABLE_KEYS.isdisjoint(summary.keys()))
         self.assertNotIn("e-0-0", rendered)
         self.assertNotIn("p-0-0", rendered)
+
+    def test_exact_private_keys_are_detected_without_false_prefix_match(self) -> None:
+        self.assertTrue(_contains_forbidden_shareable_key({"function_token": "T"}))
+        self.assertTrue(_contains_forbidden_shareable_key({"nested": [{"phrase_key": "p"}]}))
+        self.assertFalse(_contains_forbidden_shareable_key({"function_token_rewrite_used": False}))
 
     def test_work_family_cross_fold_leakage_fails_closed(self) -> None:
         rows = _rows()
