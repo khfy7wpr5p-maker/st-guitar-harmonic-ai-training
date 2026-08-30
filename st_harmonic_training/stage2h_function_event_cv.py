@@ -32,6 +32,9 @@ EXPECTED_STAGE2G_EVENT_COUNT = 1854
 EXPECTED_STAGE2G_MATERIALIZABLE_SOURCE_PATH_COUNT = 363
 EXPECTED_STAGE2G_CANDIDATE_RECORD_COUNT = 355
 MAX_PRIVATE_BYTES = 64 * 1024 * 1024
+FORBIDDEN_SHAREABLE_KEYS = frozenset(
+    {"function_token", "phrase_key", "carrier_event_id", "source_annotation_sha256"}
+)
 
 
 class Stage2HFunctionEventCVError(ValueError):
@@ -46,6 +49,16 @@ def _canonical_bytes(value: object) -> bytes:
 
 def _canonical_sha256(value: object) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
+
+
+def _contains_forbidden_shareable_key(value: object) -> bool:
+    if isinstance(value, dict):
+        if FORBIDDEN_SHAREABLE_KEYS.intersection(value):
+            return True
+        return any(_contains_forbidden_shareable_key(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_forbidden_shareable_key(item) for item in value)
+    return False
 
 
 def build_stage2h_contract() -> dict[str, object]:
@@ -101,7 +114,6 @@ def validate_stage2h_contract(data: object) -> dict[str, object]:
 def _validate_stage2g_private_payload(data: object) -> list[dict[str, Any]]:
     if not isinstance(data, dict) or data.get("schema_version") != STAGE2G_SCHEMA:
         raise Stage2HFunctionEventCVError("unsupported Stage 2-G private payload schema")
-    # Reuse Stage 2-G's full fail-closed boundary validation first.
     build_stage2g_summary(data)
     if data.get("private_event_manifest_sha256") != EXPECTED_STAGE2G_PRIVATE_EVENT_MANIFEST_SHA256:
         raise Stage2HFunctionEventCVError("Stage 2-G private event manifest changed")
@@ -320,10 +332,8 @@ def run_stage2h_grouped_cv(stage2b_data: object, stage2g_data: object) -> dict[s
         "production_authority": False,
         "deterministic_resolver_remains_authoritative": True,
     }
-    rendered = json.dumps(summary, sort_keys=True, ensure_ascii=False)
-    for private_key in ("function_token", "phrase_key", "carrier_event_id", "source_annotation_sha256"):
-        if private_key in rendered:
-            raise Stage2HFunctionEventCVError("shareable Stage 2-H summary leaks private event data")
+    if _contains_forbidden_shareable_key(summary):
+        raise Stage2HFunctionEventCVError("shareable Stage 2-H summary leaks private event data")
     return summary
 
 
