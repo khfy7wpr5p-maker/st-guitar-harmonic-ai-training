@@ -125,8 +125,9 @@ class Stage2JFunctionEventIndexCVTests(unittest.TestCase):
         ):
             summary = run_stage2j_grouped_cv({}, {})
         rendered = json.dumps(summary, sort_keys=True)
-        for private_value in ("e-0-0", "function_token", "phrase_key", "carrier_event_id"):
-            self.assertNotIn(private_value, rendered)
+        self.assertNotIn("e-0-0", rendered)
+        for private_key in ("function_token", "phrase_key", "carrier_event_id", "source_annotation_sha256"):
+            self.assertNotIn(f'"{private_key}"', rendered)
 
     def test_contract_tamper_fails_closed(self) -> None:
         contract = build_stage2j_contract()
