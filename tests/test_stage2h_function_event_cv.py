@@ -113,8 +113,8 @@ class Stage2HFunctionEventCVTests(unittest.TestCase):
         self.assertNotIn("function_token", rendered)
         self.assertNotIn("phrase_key", rendered)
         self.assertNotIn("carrier_event_id", rendered)
-        self.assertNotIn("T\"", rendered)
-        self.assertNotIn("D\"", rendered)
+        self.assertNotIn("e-0-0", rendered)
+        self.assertNotIn("p-0-0", rendered)
 
     def test_work_family_cross_fold_leakage_fails_closed(self) -> None:
         rows = _rows()
