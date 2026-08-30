@@ -1,0 +1,18 @@
+{
+  "schema_version": "st-stage2h-stage2g-private-summary-receipt-v1",
+  "source_stage2g_summary_schema": "st-stage2g-function-onset-events-summary-v1",
+  "source_corpus": "TAVERN_REVIEWED_694",
+  "materialized_event_count": 1854,
+  "materialized_source_path_count": 363,
+  "onset_carrier_candidate_record_count": 355,
+  "onset_carrier_candidate_source_path_count": 366,
+  "private_event_manifest_sha256": "d7bbd514ec85b87aee423cae9dce39c74e634ab2f1040fed82af0e25105f255d",
+  "non_train_annotation_bodies_materialized": false,
+  "original_validation_target_access": false,
+  "calibration_target_access": false,
+  "holdout_target_access": false,
+  "model_training_started": false,
+  "model_selection_started": false,
+  "full_train_final_fit_started": false,
+  "production_authority": false
+}
