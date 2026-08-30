@@ -1,0 +1,13 @@
+{
+  "schema_version": "st-stage2g-materializable-path-clarification-v1",
+  "stage2f_onset_carrier_candidate_source_path_count": 366,
+  "stage2g_materializable_source_path_count": 363,
+  "difference_source_path_count": 3,
+  "record_level_all_selected_variants_must_be_candidate": true,
+  "partial_quarantine_recovery_authorized": false,
+  "quarantine_policy_relaxed": false,
+  "non_train_access": false,
+  "target_invention": false,
+  "model_training_started": false,
+  "production_authority": false
+}
