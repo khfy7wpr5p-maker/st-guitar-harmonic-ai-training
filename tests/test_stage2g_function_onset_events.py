@@ -23,6 +23,7 @@ from st_harmonic_training.stage2g_function_onset_events import (
     EXPECTED_FOLD_WORK_FAMILY_DISTRIBUTION,
     EXPECTED_FUNCTION_ELIGIBLE_RECORD_COUNT,
     EXPECTED_FUNCTION_SUPPORTED_SOURCE_TARGET_COUNT,
+    EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT,
     EXPECTED_ONSET_CANDIDATE_RECORD_COUNT,
     EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT,
     EXPECTED_QUARANTINE_RECORD_COUNT,
@@ -109,7 +110,7 @@ def _private_payload() -> dict[str, object]:
             EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT
         ),
         "quarantine_source_path_count": EXPECTED_QUARANTINE_SOURCE_PATH_COUNT,
-        "materialized_source_path_count": EXPECTED_ONSET_CANDIDATE_SOURCE_PATH_COUNT,
+        "materialized_source_path_count": EXPECTED_MATERIALIZABLE_SOURCE_PATH_COUNT,
         "fold_record_distribution": EXPECTED_FOLD_RECORD_DISTRIBUTION,
         "fold_function_eligible_record_distribution": (
             EXPECTED_FOLD_FUNCTION_ELIGIBLE_RECORD_DISTRIBUTION
