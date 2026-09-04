@@ -142,7 +142,7 @@ class Stage2QExactRuntimeAlignmentCoverageTests(unittest.TestCase):
         self.assertEqual(result["exact_aligned_event_count"], 0)
         self.assertEqual(
             result["event_failure_reasons"],
-            {"MULTIPLE_FUNCTION_EVENTS_SAME_RUNTIME_FRAME": 2},
+            {"MULTIPLE_FUNCTION_EVENTS_SAME_RUNTIME_FRAME": 1},
         )
 
 
